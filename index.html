@@ -415,7 +415,7 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
             </div>
             <label>Amount (Min 100)</label>
             <input id="withdrawAmount" type="number" placeholder="100">
-            <p class="small" style="margin-top:8px; color:var(--primary-color); font-weight:700;">⏱️ Processed instantly via local system.</p>
+            <p class="small" style="margin-top:8px; color:var(--primary-color); font-weight:700;">⏱️ Processed securely via server.</p>
             <button class="btn primary" style="width:100%; margin-top:14px; font-size:13px;" onclick="submitWithdrawal()">Request Withdrawal</button>
         </div>
         <div id="withdrawMessage"></div>
@@ -484,175 +484,19 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
 </section>
 
 <script>
-// Mock LocalStorage API fallback mechanism for standalone testing
-let db = JSON.parse(localStorage.getItem("AE_DB_DATA")) || {
-    users: [], deposits: [], withdrawals: [], tasks: [], submissions: []
-};
-
-function saveDB() {
-    localStorage.setItem("AE_DB_DATA", JSON.stringify(db));
-}
-
+const API_URL = "http://localhost:3000/api";
 let currentUserId = localStorage.getItem("AE_CURRENT_USER");
 let isAdmin = localStorage.getItem("AE_ADMIN") === "true";
 const MIN_DEPOSIT = 500;
 
-// Simulated async API wrapper to match original architecture
 async function apiFetch(endpoint, options = {}) {
-    await new Promise(r => setTimeout(r, 150)); // simulate network latency
-    let body = options.body ? JSON.parse(options.body) : {};
-    
-    if(endpoint === "/data") return { success: true, data: db };
-    
-    if(endpoint === "/register") {
-        if(db.users.find(u => u.username === body.username || u.email === body.email)) {
-            return { success: false, message: "Username or Email already exists!" };
-        }
-        let newUser = {
-            id: 'u_' + Date.now(),
-            username: body.username,
-            email: body.email,
-            password: body.password,
-            balance: 0,
-            totalEarning: 0,
-            totalWithdraw: 0,
-            planActive: false,
-            planType: null,
-            withdrawAccount: null
-        };
-        db.users.push(newUser);
-        saveDB();
-        return { success: true, user: newUser };
+    try {
+        let res = await fetch(API_URL + endpoint, options);
+        return await res.json();
+    } catch(err) {
+        console.error(err);
+        return { success: false, message: "Server connection failed!" };
     }
-
-    if(endpoint === "/invest") {
-        let user = db.users.find(u => u.id === body.userId);
-        let cost = body.planType === 'plan3' ? 2000 : (body.planType === 'plan2' ? 1000 : 500);
-        if(!user) return { success: false, message: "User not found" };
-        if(user.balance < cost) return { success: false, message: "Insufficient balance! Please deposit funds first." };
-        user.balance -= cost;
-        user.planActive = true;
-        user.planType = body.planType;
-        saveDB();
-        return { success: true };
-    }
-
-    if(endpoint === "/bonus") {
-        let user = db.users.find(u => u.id === body.userId);
-        if(!user || !user.planActive) return { success: false, message: "Activate a plan to claim daily bonus!" };
-        let bonusAmt = user.planType === 'plan3' ? 40 : 20;
-        user.balance += bonusAmt;
-        user.totalEarning += bonusAmt;
-        saveDB();
-        return { success: true, message: `Successfully claimed PKR ${bonusAmt} bonus!` };
-    }
-
-    if(endpoint === "/submit-task") {
-        db.submissions.push({
-            id: 'sub_' + Date.now(),
-            taskId: body.taskId,
-            userId: body.userId,
-            username: (db.users.find(u => u.id === body.userId) || {}).username || 'User',
-            taskTitle: (db.tasks.find(t => t.id === body.taskId) || {}).title || 'Task',
-            reward: (db.tasks.find(t => t.id === body.taskId) || {}).reward || 30,
-            proofImage: body.proofImage,
-            notes: body.notes,
-            status: 'pending'
-        });
-        saveDB();
-        return { success: true, message: "Proof submitted successfully. Waiting for admin approval." };
-    }
-
-    if(endpoint === "/deposit") {
-        db.deposits.push({
-            id: 'dep_' + Date.now(),
-            userId: body.userId,
-            username: (db.users.find(u => u.id === body.userId) || {}).username || 'User',
-            amount: body.amount,
-            transactionId: body.transactionId,
-            proofImage: body.proofImage,
-            status: 'Pending'
-        });
-        saveDB();
-        return { success: true, message: "Deposit request submitted successfully." };
-    }
-
-    if(endpoint === "/withdraw") {
-        let user = db.users.find(u => u.id === body.userId);
-        if(!user) return { success: false, message: "User not found" };
-        if(body.amount < 100) return { success: false, message: "Minimum withdrawal is PKR 100" };
-        if(user.balance < body.amount) return { success: false, message: "Insufficient balance!" };
-        user.balance -= body.amount;
-        user.totalWithdraw += body.amount;
-        db.withdrawals.push({
-            id: 'wit_' + Date.now(),
-            userId: user.id,
-            username: user.username,
-            amount: body.amount,
-            method: user.withdrawAccount.method,
-            holderName: user.withdrawAccount.holderName,
-            accountNum: user.withdrawAccount.accountNum,
-            status: 'Pending'
-        });
-        saveDB();
-        return { success: true, message: "Withdrawal requested successfully!" };
-    }
-
-    if(endpoint === "/save-account") {
-        let user = db.users.find(u => u.id === body.userId);
-        if(user) {
-            user.withdrawAccount = body.method ? { method: body.method, holderName: body.holderName, accountNum: body.accountNum } : null;
-            saveDB();
-        }
-        return { success: true, message: "Account settings updated." };
-    }
-
-    if(endpoint.startsWith("/admin/")) {
-        let id = body.id;
-        if(endpoint === "/admin/approve-deposit") {
-            let dep = db.deposits.find(d => d.id === id);
-            if(dep && dep.status === "Pending") {
-                dep.status = "Approved";
-                let user = db.users.find(u => u.id === dep.userId);
-                if(user) user.balance += dep.amount;
-            }
-        } else if(endpoint === "/admin/reject-deposit") {
-            let dep = db.deposits.find(d => d.id === id);
-            if(dep) dep.status = "Rejected";
-        } else if(endpoint === "/admin/approve-withdrawal") {
-            let wit = db.withdrawals.find(w => w.id === id);
-            if(wit) wit.status = "Approved";
-        } else if(endpoint === "/admin/reject-withdrawal") {
-            let wit = db.withdrawals.find(w => w.id === id);
-            if(wit) {
-                wit.status = "Rejected";
-                let user = db.users.find(u => u.id === wit.userId);
-                if(user) { user.balance += wit.amount; user.totalWithdraw -= wit.amount; }
-            }
-        } else if(endpoint === "/admin/approve-submission") {
-            let sub = db.submissions.find(s => s.id === id);
-            if(sub && sub.status === "pending") {
-                sub.status = "approved";
-                let user = db.users.find(u => u.id === sub.userId);
-                if(user) { user.balance += sub.reward; user.totalEarning += sub.reward; }
-            }
-        } else if(endpoint === "/admin/reject-submission") {
-            let sub = db.submissions.find(s => s.id === id);
-            if(sub) sub.status = "rejected";
-        } else if(endpoint === "/admin/delete-user") {
-            db.users = db.users.filter(u => u.id !== id);
-        } else if(endpoint === "/admin/publish-task") {
-            db.tasks.push({
-                id: 'task_' + Date.now(),
-                title: body.title,
-                reward: Number(body.reward),
-                targetUserId: body.targetUserId
-            });
-        }
-        saveDB();
-        return { success: true };
-    }
-    return { success: false, message: "Endpoint not found" };
 }
 
 async function getDB() {
@@ -667,7 +511,7 @@ function runWithLoader(actionFn) {
     showLoader();
     setTimeout(async function() {
         try { if(typeof actionFn === "function") await actionFn(); } catch(e) { console.error(e); } finally { hideLoader(); }
-    }, 120);
+    }, 100);
 }
 
 function openLogin() { runWithLoader(function() { showPage('login'); }); }
@@ -768,7 +612,6 @@ async function registerUser(){
         var email = document.getElementById("signupEmail").value.trim();
         var password = document.getElementById("signupPassword").value;
         var confirm = document.getElementById("signupConfirm").value;
-        var refCode = document.getElementById("signupRef").value.trim();
         var msg = document.getElementById("signupMessage");
 
         if(!username || !email || !password){
@@ -781,7 +624,7 @@ async function registerUser(){
         let res = await apiFetch("/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password, referredBy: refCode })
+            body: JSON.stringify({ username, email, password })
         });
 
         if(!res.success){
@@ -1086,7 +929,7 @@ async function loadAdminData(){
     depContainer.innerHTML = !deposits.length ? "<p class='small'>No pending deposits.</p>" : deposits.map(d => `
         <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
             <div><strong>User: ${safe(d.username)}</strong><br>Amount: PKR ${d.amount} | TRX: ${safe(d.transactionId)}${d.proofImage ? `<br><a href="${d.proofImage}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Receipt</a>` : ""}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/approve-deposit', '${d.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/reject-deposit', '${d.id}')">Reject</button></div>
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('approve-deposit', '${d.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('reject-deposit', '${d.id}')">Reject</button></div>
         </div>
     `).join("");
 
@@ -1095,7 +938,7 @@ async function loadAdminData(){
     witContainer.innerHTML = !withdrawals.length ? "<p class='small'>No pending withdrawals.</p>" : withdrawals.map(w => `
         <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
             <div><strong>User: ${safe(w.username)}</strong><br>Amount: PKR ${w.amount} | ${safe(w.method)}<br>Name: ${safe(w.holderName)} | Acc: ${safe(w.accountNum)}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/approve-withdrawal', '${w.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/reject-withdrawal', '${w.id}')">Reject</button></div>
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('approve-withdrawal', '${w.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('reject-withdrawal', '${w.id}')">Reject</button></div>
         </div>
     `).join("");
 
@@ -1104,7 +947,7 @@ async function loadAdminData(){
     subContainer.innerHTML = !submissions.length ? "<p class='small'>No pending submissions.</p>" : submissions.map(s => `
         <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
             <div><strong>User: ${safe(s.username)}</strong><br>Task: ${safe(s.taskTitle)} | Reward: PKR ${s.reward}${s.proofImage ? `<br><a href="${s.proofImage}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Proof</a>` : ""}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/approve-submission', '${s.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/reject-submission', '${s.id}')">Reject</button></div>
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('approve-submission', '${s.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('reject-submission', '${s.id}')">Reject</button></div>
         </div>
     `).join("");
 
@@ -1126,20 +969,20 @@ async function loadAdminData(){
 }
 
 async function adminAction(endpoint, id){
-    await apiFetch(endpoint, {
+    await apiFetch("/admin/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ endpoint, id })
     });
     loadAdminData();
 }
 
 async function deleteUser(id){
     if(confirm("Are you sure you want to delete this user?")) {
-        await apiFetch("/admin/delete-user", {
+        await apiFetch("/admin/action", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id })
+            body: JSON.stringify({ endpoint: 'delete-user', id })
         });
         loadAdminData();
     }
