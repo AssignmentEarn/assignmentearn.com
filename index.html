@@ -484,19 +484,175 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
 </section>
 
 <script>
-const API_URL = "http://localhost:3000/api";
+// Mock LocalStorage API fallback mechanism for standalone testing
+let db = JSON.parse(localStorage.getItem("AE_DB_DATA")) || {
+    users: [], deposits: [], withdrawals: [], tasks: [], submissions: []
+};
+
+function saveDB() {
+    localStorage.setItem("AE_DB_DATA", JSON.stringify(db));
+}
+
 let currentUserId = localStorage.getItem("AE_CURRENT_USER");
 let isAdmin = localStorage.getItem("AE_ADMIN") === "true";
 const MIN_DEPOSIT = 500;
 
+// Simulated async API wrapper to match original architecture
 async function apiFetch(endpoint, options = {}) {
-    try {
-        let res = await fetch(API_URL + endpoint, options);
-        return await res.json();
-    } catch (err) {
-        console.error("API Error:", err);
-        return { success: false, message: "Server connection failed!" };
+    await new Promise(r => setTimeout(r, 150)); // simulate network latency
+    let body = options.body ? JSON.parse(options.body) : {};
+    
+    if(endpoint === "/data") return { success: true, data: db };
+    
+    if(endpoint === "/register") {
+        if(db.users.find(u => u.username === body.username || u.email === body.email)) {
+            return { success: false, message: "Username or Email already exists!" };
+        }
+        let newUser = {
+            id: 'u_' + Date.now(),
+            username: body.username,
+            email: body.email,
+            password: body.password,
+            balance: 0,
+            totalEarning: 0,
+            totalWithdraw: 0,
+            planActive: false,
+            planType: null,
+            withdrawAccount: null
+        };
+        db.users.push(newUser);
+        saveDB();
+        return { success: true, user: newUser };
     }
+
+    if(endpoint === "/invest") {
+        let user = db.users.find(u => u.id === body.userId);
+        let cost = body.planType === 'plan3' ? 2000 : (body.planType === 'plan2' ? 1000 : 500);
+        if(!user) return { success: false, message: "User not found" };
+        if(user.balance < cost) return { success: false, message: "Insufficient balance! Please deposit funds first." };
+        user.balance -= cost;
+        user.planActive = true;
+        user.planType = body.planType;
+        saveDB();
+        return { success: true };
+    }
+
+    if(endpoint === "/bonus") {
+        let user = db.users.find(u => u.id === body.userId);
+        if(!user || !user.planActive) return { success: false, message: "Activate a plan to claim daily bonus!" };
+        let bonusAmt = user.planType === 'plan3' ? 40 : 20;
+        user.balance += bonusAmt;
+        user.totalEarning += bonusAmt;
+        saveDB();
+        return { success: true, message: `Successfully claimed PKR ${bonusAmt} bonus!` };
+    }
+
+    if(endpoint === "/submit-task") {
+        db.submissions.push({
+            id: 'sub_' + Date.now(),
+            taskId: body.taskId,
+            userId: body.userId,
+            username: (db.users.find(u => u.id === body.userId) || {}).username || 'User',
+            taskTitle: (db.tasks.find(t => t.id === body.taskId) || {}).title || 'Task',
+            reward: (db.tasks.find(t => t.id === body.taskId) || {}).reward || 30,
+            proofImage: body.proofImage,
+            notes: body.notes,
+            status: 'pending'
+        });
+        saveDB();
+        return { success: true, message: "Proof submitted successfully. Waiting for admin approval." };
+    }
+
+    if(endpoint === "/deposit") {
+        db.deposits.push({
+            id: 'dep_' + Date.now(),
+            userId: body.userId,
+            username: (db.users.find(u => u.id === body.userId) || {}).username || 'User',
+            amount: body.amount,
+            transactionId: body.transactionId,
+            proofImage: body.proofImage,
+            status: 'Pending'
+        });
+        saveDB();
+        return { success: true, message: "Deposit request submitted successfully." };
+    }
+
+    if(endpoint === "/withdraw") {
+        let user = db.users.find(u => u.id === body.userId);
+        if(!user) return { success: false, message: "User not found" };
+        if(body.amount < 100) return { success: false, message: "Minimum withdrawal is PKR 100" };
+        if(user.balance < body.amount) return { success: false, message: "Insufficient balance!" };
+        user.balance -= body.amount;
+        user.totalWithdraw += body.amount;
+        db.withdrawals.push({
+            id: 'wit_' + Date.now(),
+            userId: user.id,
+            username: user.username,
+            amount: body.amount,
+            method: user.withdrawAccount.method,
+            holderName: user.withdrawAccount.holderName,
+            accountNum: user.withdrawAccount.accountNum,
+            status: 'Pending'
+        });
+        saveDB();
+        return { success: true, message: "Withdrawal requested successfully!" };
+    }
+
+    if(endpoint === "/save-account") {
+        let user = db.users.find(u => u.id === body.userId);
+        if(user) {
+            user.withdrawAccount = body.method ? { method: body.method, holderName: body.holderName, accountNum: body.accountNum } : null;
+            saveDB();
+        }
+        return { success: true, message: "Account settings updated." };
+    }
+
+    if(endpoint.startsWith("/admin/")) {
+        let id = body.id;
+        if(endpoint === "/admin/approve-deposit") {
+            let dep = db.deposits.find(d => d.id === id);
+            if(dep && dep.status === "Pending") {
+                dep.status = "Approved";
+                let user = db.users.find(u => u.id === dep.userId);
+                if(user) user.balance += dep.amount;
+            }
+        } else if(endpoint === "/admin/reject-deposit") {
+            let dep = db.deposits.find(d => d.id === id);
+            if(dep) dep.status = "Rejected";
+        } else if(endpoint === "/admin/approve-withdrawal") {
+            let wit = db.withdrawals.find(w => w.id === id);
+            if(wit) wit.status = "Approved";
+        } else if(endpoint === "/admin/reject-withdrawal") {
+            let wit = db.withdrawals.find(w => w.id === id);
+            if(wit) {
+                wit.status = "Rejected";
+                let user = db.users.find(u => u.id === wit.userId);
+                if(user) { user.balance += wit.amount; user.totalWithdraw -= wit.amount; }
+            }
+        } else if(endpoint === "/admin/approve-submission") {
+            let sub = db.submissions.find(s => s.id === id);
+            if(sub && sub.status === "pending") {
+                sub.status = "approved";
+                let user = db.users.find(u => u.id === sub.userId);
+                if(user) { user.balance += sub.reward; user.totalEarning += sub.reward; }
+            }
+        } else if(endpoint === "/admin/reject-submission") {
+            let sub = db.submissions.find(s => s.id === id);
+            if(sub) sub.status = "rejected";
+        } else if(endpoint === "/admin/delete-user") {
+            db.users = db.users.filter(u => u.id !== id);
+        } else if(endpoint === "/admin/publish-task") {
+            db.tasks.push({
+                id: 'task_' + Date.now(),
+                title: body.title,
+                reward: Number(body.reward),
+                targetUserId: body.targetUserId
+            });
+        }
+        saveDB();
+        return { success: true };
+    }
+    return { success: false, message: "Endpoint not found" };
 }
 
 async function getDB() {
@@ -580,7 +736,8 @@ async function copyReferralLink() {
     let db = await getDB();
     let user = db.users.find(u => u.id === currentUserId);
     if(!user) return;
-    var link = window.location.origin + window.location.pathname + "?ref=" + encodeURIComponent(user.username);
+    var baseUrl = window.location.href.split('?')[0];
+    var link = baseUrl + "?ref=" + encodeURIComponent(user.username);
     copyToClipboard(link, "Referral link copied!");
 }
 
