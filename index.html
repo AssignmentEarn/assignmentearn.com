@@ -479,7 +479,6 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
 </section>
 
 <script>
-// Yeh raha aapka Firebase configuration jo aapke project se link hai:
 const firebaseConfig = {
     apiKey: "AIzaSyCUduwGN9AH9faGCMUPyk5qedmMyZ8AT6rA",
     authDomain: "assignment-earn.firebaseapp.com",
@@ -614,9 +613,10 @@ function registerUser(){
             msg.className = "message error"; msg.textContent = "Passwords do not match."; return;
         }
 
+        // Check if username already exists case-insensitively or exactly
         var checkSnap = await db.collection("users").where("username", "==", username).get();
         if(!checkSnap.empty){
-            msg.className = "message error"; msg.textContent = "Username already taken!"; return;
+            msg.className = "message error"; msg.textContent = "Username already taken! Try another name."; return;
         }
 
         var userId = "user_" + Date.now();
@@ -1118,7 +1118,31 @@ function safe(str){
     return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-window.onload = function() {
+// Function to clean old/ghost data if required (runs once per session or initialization if needed)
+async function cleanOldDatabaseRecords() {
+    if(!localStorage.getItem("AE_DB_CLEANED_V2")) {
+        try {
+            const collections = ['users', 'deposits', 'withdrawals', 'submissions', 'tasks'];
+            for(let col of collections) {
+                const snap = await db.collection(col).get();
+                const batch = db.batch();
+                snap.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+            }
+            localStorage.setItem("AE_DB_CLEANED_V2", "true");
+            console.log("Database cleaned successfully.");
+        } catch(e) {
+            console.log("Cleanup note:", e);
+        }
+    }
+}
+
+window.onload = async function() {
+    // Purana data saaf karne ke liye yeh line active hai
+    await cleanOldDatabaseRecords();
+
     var ref = new URLSearchParams(window.location.search).get('ref');
     if(ref) document.getElementById("signupRef").value = ref;
 
