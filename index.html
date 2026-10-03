@@ -3,11 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Assignment Earn - Official Smart Earning Platform</title>
+<title>Assignment Earn - Smart Earning Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
 :root {
@@ -16,10 +14,10 @@
     --primary-hover: #7e22ce;
     --primary-gradient: linear-gradient(135deg, #a855f7, #7e22ce);
     --accent-color: #d8b4fe;
-    --bg-glass: rgba(255, 255, 255, 0.65);
-    --bg-nav: rgba(255, 255, 255, 0.9);
+    --bg-glass: rgba(255, 255, 255, 0.7);
+    --bg-nav: rgba(255, 255, 255, 0.92);
     --border-color: rgba(255, 255, 255, 0.9);
-    --card-bg: rgba(255, 255, 255, 0.55);
+    --card-bg: rgba(255, 255, 255, 0.6);
     --text-color: #1e1b4b;
     --subtext-color: #4c1d95;
     --input-bg: rgba(255, 255, 255, 0.9);
@@ -35,8 +33,8 @@ body.dark-mode {
     --primary-hover: #a855f7;
     --primary-gradient: linear-gradient(135deg, #9333ea, #d8b4fe);
     --accent-color: #e9d5ff;
-    --bg-glass: rgba(43, 20, 68, 0.6);
-    --bg-nav: rgba(30, 10, 50, 0.92);
+    --bg-glass: rgba(43, 20, 68, 0.65);
+    --bg-nav: rgba(30, 10, 50, 0.95);
     --border-color: rgba(255, 255, 255, 0.12);
     --card-bg: rgba(255, 255, 255, 0.05);
     --text-color: #faf5ff;
@@ -53,70 +51,72 @@ body { background: var(--bg-main); background-attachment: fixed; min-height: 100
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; touch-action: manipulation; }
 .hidden { display: none !important; }
-.glass { background: var(--bg-glass) !important; border: 1px solid var(--border-color) !important; -webkit-backdrop-filter: blur(20px) saturate(180%) !important; backdrop-filter: blur(20px) saturate(180%) !important; box-shadow: var(--shadow-glow) !important; border-radius: 20px; position: relative; }
-.page { min-height: calc(100vh - 140px); padding: 18px 14px; }
-.nav { height: 62px; padding: 0 4%; display: flex; align-items: center; justify-content: space-between; background: var(--bg-nav) !important; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
+.glass { background: var(--bg-glass) !important; border: 1px solid var(--border-color) !important; -webkit-backdrop-filter: blur(20px) saturate(180%) !important; backdrop-filter: blur(20px) saturate(180%) !important; box-shadow: var(--shadow-glow) !important; border-radius: 22px; position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.page { min-height: calc(100vh - 140px); padding: 20px 14px; animation: fadeIn 0.35s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.nav { height: 64px; padding: 0 5%; display: flex; align-items: center; justify-content: space-between; background: var(--bg-nav) !important; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; }
-.logo { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; color: #fff; font-weight: 900; background: var(--primary-gradient); box-shadow: 0 4px 14px rgba(147, 51, 234, 0.4); }
-.btn { border: 0; border-radius: 12px; padding: 9px 16px; font-weight: 700; font-size: 13px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; outline: none; }
+.logo { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff; font-weight: 900; background: var(--primary-gradient); box-shadow: 0 4px 14px rgba(147, 51, 234, 0.4); }
+.btn { border: 0; border-radius: 14px; padding: 10px 18px; font-weight: 700; font-size: 13px; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; outline: none; }
 .btn:active { transform: scale(0.97); }
 .primary { background: var(--primary-gradient); color: #ffffff; box-shadow: 0 4px 15px rgba(147, 51, 234, 0.35); }
 .light { background: var(--bg-glass); color: var(--text-color); border: 1px solid var(--border-color); }
 .green { background: var(--green-gradient); color: #ffffff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35); }
 .red { background: var(--red-gradient); color: #ffffff; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35); }
 .white-btn { background: var(--primary-color); color: #ffffff; font-weight: 800; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3); }
-.record-sticker { position: absolute; top: 14px; right: 14px; background: rgba(147, 51, 234, 0.15); border: 1px solid rgba(147, 51, 234, 0.35); color: var(--primary-color); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px; z-index: 5; }
-.hero { width: min(750px, 100%); margin: 15px auto; padding: 32px 20px; text-align: center; }
+.record-sticker { position: absolute; top: 16px; right: 16px; background: rgba(147, 51, 234, 0.15); border: 1px solid rgba(147, 51, 234, 0.35); color: var(--primary-color); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px; z-index: 5; }
+.hero { width: min(750px, 100%); margin: 20px auto; padding: 36px 20px; text-align: center; }
 .hero h1 { margin: 12px 0 8px; font-size: clamp(24px, 5vw, 38px); font-weight: 900; }
 .hero h1 span { color: var(--primary-color); }
-.hero p { color: var(--subtext-color); line-height: 1.5; margin-bottom: 22px; font-size: 14px; }
-.auth { width: min(440px, 100%); margin: 12px auto; padding: 26px 20px; }
+.hero p { color: var(--subtext-color); line-height: 1.6; margin-bottom: 24px; font-size: 14px; }
+.auth { width: min(440px, 100%); margin: 15px auto; padding: 28px 22px; }
 .auth h1 { text-align: center; margin: 8px 0 2px; font-size: 22px; font-weight: 800; }
-.sub { text-align: center; color: var(--subtext-color); margin-bottom: 18px; font-size: 13px; }
-label { display: block; margin: 12px 0 5px; font-weight: 700; font-size: 11px; color: var(--subtext-color); text-transform: uppercase; }
-input, textarea, select { width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); outline: none; font-size: 14px; }
+.sub { text-align: center; color: var(--subtext-color); margin-bottom: 20px; font-size: 13px; }
+label { display: block; margin: 12px 0 6px; font-weight: 700; font-size: 11px; color: var(--subtext-color); text-transform: uppercase; letter-spacing: 0.5px; }
+input, textarea, select { width: 100%; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); outline: none; font-size: 14px; transition: all 0.2s; }
 input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2); }
 .password-box { position: relative; display: flex; align-items: center; }
-.password-box input { padding-right: 42px; }
-.eye-btn { position: absolute; right: 12px; background: none; border: none; font-size: 16px; color: var(--primary-color); cursor: pointer; }
-.message { margin-top: 14px; padding: 10px; border-radius: 10px; text-align: center; font-weight: 700; font-size: 12px; }
+.password-box input { padding-right: 44px; }
+.eye-btn { position: absolute; right: 14px; background: none; border: none; font-size: 16px; color: var(--primary-color); cursor: pointer; }
+.message { margin-top: 14px; padding: 10px; border-radius: 12px; text-align: center; font-weight: 700; font-size: 12px; }
 .success { background: rgba(16, 185, 129, 0.18); border: 1px solid #10b981; color: #047857; }
 .error { background: rgba(239, 68, 68, 0.18); border: 1px solid #ef4444; color: #b91c1c; }
 .dashboard { width: min(880px, 100%); margin: auto; }
-.welcome { padding: 18px 20px; margin-bottom: 14px; }
-.balance { padding: 24px 18px; margin-bottom: 14px; text-align: center; }
-.balance-number { font-size: clamp(34px, 6vw, 44px); font-weight: 900; color: var(--primary-color); margin: 6px 0 14px; }
-.plans-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 14px; margin-top: 12px; }
-@media (min-width: 600px) { .plans-grid { grid-template-columns: repeat(3, 1fr); } }
-.plan-card { padding: 18px; border-radius: 18px; text-align: center; }
-.plan-price { font-size: 20px; font-weight: 900; margin: 4px 0 8px; }
-.status { display: inline-block; padding: 4px 10px; border-radius: 16px; background: rgba(245, 158, 11, 0.18); color: #b45309; font-weight: 800; font-size: 11px; }
+.welcome { padding: 20px 22px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+.balance { padding: 26px 20px; margin-bottom: 16px; text-align: center; }
+.balance-number { font-size: clamp(34px, 6vw, 46px); font-weight: 900; color: var(--primary-color); margin: 6px 0 14px; }
+.slider-container { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; margin-top: 12px; scrollbar-width: none; }
+.slider-container::-webkit-scrollbar { display: none; }
+.plan-card { min-width: 260px; flex: 1; padding: 22px; border-radius: 20px; text-align: center; scroll-snap-align: start; }
+@media (min-width: 700px) { .slider-container { display: grid; grid-template-columns: repeat(3, 1fr); overflow-x: visible; } }
+.plan-price { font-size: 22px; font-weight: 900; margin: 6px 0 10px; color: var(--text-color); }
+.status { display: inline-block; padding: 5px 12px; border-radius: 16px; background: rgba(245, 158, 11, 0.18); color: #b45309; font-weight: 800; font-size: 11px; }
 .status.active, .status.approved { background: rgba(16, 185, 129, 0.18); color: #047857; }
-.warning-box { margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #b91c1c; font-size: 12px; }
-.info-box { margin-top: 14px; padding: 14px; border-radius: 14px; font-size: 13px; }
-.payment-card { background: rgba(147, 51, 234, 0.1); border: 1px solid rgba(147, 51, 234, 0.3); border-radius: 14px; padding: 14px; margin: 12px 0; text-align: center; }
+.warning-box { margin-top: 14px; padding: 14px; border-radius: 14px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #b91c1c; font-size: 12px; font-weight: 600; }
+.info-box { margin-top: 14px; padding: 16px; border-radius: 16px; font-size: 13px; }
+.payment-card { background: rgba(147, 51, 234, 0.1); border: 1px solid rgba(147, 51, 234, 0.3); border-radius: 16px; padding: 16px; margin: 14px 0; text-align: center; }
 .small { color: var(--subtext-color); font-size: 12px; }
-.history { padding: 18px; margin-top: 14px; }
-.history-item, .task-item { padding: 14px; border-radius: 14px; margin-top: 10px; font-size: 13px; }
-.profile-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
-.stat-box { padding: 12px 8px; text-align: center; border-radius: 14px; background: rgba(147, 51, 234, 0.08); border: 1px solid rgba(147, 51, 234, 0.2); }
-.stat-box .stat-val { font-size: 14px; font-weight: 900; color: var(--primary-color); margin-top: 4px; }
-.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 64px; background: var(--bg-nav) !important; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 999; }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--subtext-color); font-size: 10px; font-weight: 700; background: none; border: none; gap: 3px; flex: 1; height: 100%; }
+.history { padding: 20px; margin-top: 16px; }
+.history-item, .task-item { padding: 16px; border-radius: 16px; margin-top: 12px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+.profile-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0; }
+.stat-box { padding: 14px 10px; text-align: center; border-radius: 16px; background: rgba(147, 51, 234, 0.08); border: 1px solid rgba(147, 51, 234, 0.2); }
+.stat-box .stat-val { font-size: 15px; font-weight: 900; color: var(--primary-color); margin-top: 4px; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 66px; background: var(--bg-nav) !important; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 999; }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--subtext-color); font-size: 10px; font-weight: 700; background: none; border: none; gap: 3px; flex: 1; height: 100%; transition: color 0.2s; }
 .nav-item.active { color: var(--primary-color); }
-.nav-item.center-btn .icon-bg { width: 46px; height: 46px; background: var(--primary-gradient); border-radius: 50%; display: grid; place-items: center; color: #fff; margin-top: -18px; font-size: 19px; box-shadow: 0 4px 16px rgba(147, 51, 234, 0.45); }
-.whatsapp-float { position: fixed; bottom: 76px; right: 16px; width: 52px; height: 52px; background: #25d366; color: #fff; border-radius: 50%; display: grid; place-items: center; font-size: 28px; box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45); z-index: 1000; text-decoration: none; }
+.nav-item.center-btn .icon-bg { width: 48px; height: 48px; background: var(--primary-gradient); border-radius: 50%; display: grid; place-items: center; color: #fff; margin-top: -18px; font-size: 20px; box-shadow: 0 4px 16px rgba(147, 51, 234, 0.45); }
+.whatsapp-float { position: fixed; bottom: 78px; right: 16px; width: 52px; height: 52px; background: #25d366; color: #fff; border-radius: 50%; display: grid; place-items: center; font-size: 28px; box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45); z-index: 1000; text-decoration: none; }
 .whatsapp-float:active { transform: scale(0.92); }
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.55); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); display: flex; justify-content: center; align-items: center; z-index: 1100; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); display: flex; justify-content: center; align-items: center; z-index: 1100; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
 .modal-overlay.show { opacity: 1; pointer-events: auto; }
-.modal-card { border-radius: 22px; padding: 24px 20px; width: min(420px, 92%); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); max-height: 85vh; overflow-y: auto; }
+.modal-card { border-radius: 24px; padding: 26px 22px; width: min(420px, 92%); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); max-height: 85vh; overflow-y: auto; }
 </style>
 </head>
 <body>
 <div id="globalLoader" class="modal-overlay">
-    <div class="modal-card glass" style="text-align:center; padding:20px;">
+    <div class="modal-card glass" style="text-align:center; padding:22px;">
         <i class="fa-solid fa-circle-notch fa-spin" style="font-size:32px; color:var(--primary-color);"></i>
-        <p style="font-weight:700; font-size:12px; margin-top:8px;">Loading...</p>
+        <p style="font-weight:700; font-size:12px; margin-top:10px;">Please wait...</p>
     </div>
 </div>
 <div class="orb orb-1"></div>
@@ -128,7 +128,7 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
         <span>Assignment Earn</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
-        <button class="btn light" onclick="toggleTheme()" style="padding:6px 10px;" title="Switch Theme">
+        <button class="btn light" onclick="toggleTheme()" style="padding:6px 12px;" title="Switch Theme">
             <i class="fa-solid fa-circle-half-stroke"></i>
         </button>
         <button id="adminLogoutNav" class="btn red hidden" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
@@ -159,42 +159,43 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
     </button>
 </div>
 
+<!-- Modals -->
 <div id="signupModal" class="modal-overlay">
     <div class="modal-card glass" style="text-align:center;">
-        <div style="font-size:38px;">✨</div>
-        <h2 style="color:var(--primary-color); font-size:18px; margin:6px 0;">Signup Successful!</h2>
+        <div style="font-size:40px;">✨</div>
+        <h2 style="color:var(--primary-color); font-size:18px; margin:8px 0;">Signup Successful!</h2>
         <p class="small">Your account is ready. Proceed to your dashboard!</p>
-        <button class="btn primary" style="margin-top:14px; width:100%;" onclick="closeSignupModal()">Go To Dashboard</button>
+        <button class="btn primary" style="margin-top:16px; width:100%;" onclick="closeSignupModal()">Go To Dashboard</button>
     </div>
 </div>
 
 <div id="welcomeModal" class="modal-overlay">
     <div class="modal-card glass" style="text-align:center;">
-        <div style="font-size:38px;">👋</div>
-        <h2 style="color:var(--primary-color); font-size:18px; margin:6px 0;">Welcome Back!</h2>
+        <div style="font-size:40px;">👋</div>
+        <h2 style="color:var(--primary-color); font-size:18px; margin:8px 0;">Welcome Back!</h2>
         <p class="small" id="welcomeModalText">Good to see you again!</p>
-        <button class="btn primary" style="margin-top:14px; width:100%;" onclick="closeWelcomeModal()">Go To Dashboard</button>
+        <button class="btn primary" style="margin-top:16px; width:100%;" onclick="closeWelcomeModal()">Go To Dashboard</button>
     </div>
 </div>
 
 <div id="congratsModal" class="modal-overlay">
     <div class="modal-card glass" style="text-align:center;">
-        <div style="font-size:38px;">🎉</div>
-        <h2 style="color:var(--primary-color); font-size:18px; margin:6px 0;">Congratulations!</h2>
+        <div style="font-size:40px;">🎉</div>
+        <h2 style="color:var(--primary-color); font-size:18px; margin:8px 0;">Congratulations!</h2>
         <p class="small" id="congratsModalText">Plan Activated!</p>
-        <button class="btn primary" style="margin-top:14px; width:100%;" onclick="document.getElementById('congratsModal').classList.remove('show'); loadDashboard();">Go To Dashboard</button>
+        <button class="btn primary" style="margin-top:16px; width:100%;" onclick="document.getElementById('congratsModal').classList.remove('show'); loadDashboard();">Go To Dashboard</button>
     </div>
 </div>
 
 <div id="taskModal" class="modal-overlay">
     <div class="modal-card glass">
-        <h2 style="color:var(--primary-color); font-size:16px; margin-bottom:4px;" id="taskModalTitle">Submit Proof</h2>
+        <h2 style="color:var(--primary-color); font-size:16px; margin-bottom:8px;" id="taskModalTitle">Submit Proof</h2>
         <input type="hidden" id="taskModalId">
         <label>Screenshot</label>
         <input type="file" id="taskProofFile" accept="image/*">
         <label>Notes</label>
         <textarea id="taskProofText" placeholder="Write proof text..."></textarea>
-        <div style="display:flex; gap:8px; margin-top:12px;">
+        <div style="display:flex; gap:10px; margin-top:14px;">
             <button class="btn green" style="flex:1;" onclick="submitTaskProof()">Submit</button>
             <button class="btn light" onclick="document.getElementById('taskModal').classList.remove('show')">Cancel</button>
         </div>
@@ -203,18 +204,19 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
 
 <div id="recordsModal" class="modal-overlay">
     <div class="modal-card glass">
-        <h2 id="recordsModalTitle" style="color:var(--primary-color); font-size:16px; margin-bottom:10px;">Record</h2>
+        <h2 id="recordsModalTitle" style="color:var(--primary-color); font-size:16px; margin-bottom:12px;">Record</h2>
         <div id="recordsModalBody"></div>
-        <button class="btn light" style="width:100%; margin-top:14px;" onclick="document.getElementById('recordsModal').classList.remove('show')">Close</button>
+        <button class="btn light" style="width:100%; margin-top:16px;" onclick="document.getElementById('recordsModal').classList.remove('show')">Close</button>
     </div>
 </div>
 
+<!-- Pages -->
 <section id="home" class="page">
     <div class="hero glass">
-        <div class="logo" style="margin:auto; width:48px; height:48px; font-size:20px;">AE</div>
+        <div class="logo" style="margin:auto; width:50px; height:50px; font-size:20px;">AE</div>
         <h1>Welcome to <span>Assignment Earn</span></h1>
         <p>Complete daily assignments, choose flexible lifetime earning plans, and withdraw cash easily.</p>
-        <div style="display:flex; justify-content:center; gap:10px;">
+        <div style="display:flex; justify-content:center; gap:12px;">
             <button class="btn primary" onclick="openSignup()"><i class="fa-solid fa-user-plus"></i> Get Started</button>
             <button class="btn light" onclick="openLogin()"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
         </div>
@@ -242,9 +244,9 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
         </div>
         <label>Referral Code (Optional)</label>
         <input id="signupRef" type="text" placeholder="Referrer username">
-        <button class="btn primary" style="width:100%;margin-top:14px" onclick="registerUser()">Register</button>
+        <button class="btn primary" style="width:100%;margin-top:16px" onclick="registerUser()">Register</button>
         <div id="signupMessage"></div>
-        <p style="text-align:center;margin-top:12px" class="small">
+        <p style="text-align:center;margin-top:14px" class="small">
             Already have an account? <a href="#" style="color:var(--primary-color); font-weight:700;" onclick="openLogin()">Login</a>
         </p>
     </div>
@@ -260,11 +262,11 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
         <label>Password</label>
         <div class="password-box">
             <input id="loginPassword" type="password" placeholder="Password">
-            <button type="button" class="eye-btn" onclick="togglePassword('loginPassword', this)">👁️</button>
+            <button type="button" class="eye-btn" onclick="togglePassword('loginPassword', this)">👁</button>
         </div>
-        <button class="btn primary" style="width:100%;margin-top:14px" onclick="loginUser()">Login</button>
+        <button class="btn primary" style="width:100%;margin-top:16px" onclick="loginUser()">Login</button>
         <div id="loginMessage"></div>
-        <p style="text-align:center;margin-top:12px" class="small">
+        <p style="text-align:center;margin-top:14px" class="small">
             Don't have an account? <a href="#" style="color:var(--primary-color); font-weight:700;" onclick="openSignup()">Signup</a>
         </p>
     </div>
@@ -273,53 +275,56 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
 <section id="dashboard" class="page hidden">
     <div class="dashboard">
         <div class="welcome glass">
-            <h1 id="welcomeName">Welcome</h1>
-            <p class="small">Referral Code: <strong id="userRefCode" style="color:var(--primary-color);">-</strong></p>
+            <div>
+                <h1 id="welcomeName" style="font-size:18px;">Welcome</h1>
+                <p class="small">Referral Code: <strong id="userRefCode" style="color:var(--primary-color);">-</strong></p>
+            </div>
+            <button class="btn light" style="padding:6px 12px; font-size:11px;" onclick="copyReferralLink()"><i class="fa-solid fa-share-nodes"></i> Share</button>
         </div>
         <div class="balance glass">
-            <p class="small" style="font-weight:800; text-transform:uppercase;">Current Balance</p>
+            <p class="small" style="font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Current Balance</p>
             <div class="balance-number" id="memberBalance">PKR 0</div>
         </div>
-        <div class="card glass" style="padding:16px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="card glass" style="padding:18px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <h2 style="font-size:14px; font-weight:800;">🎁 Daily Check-in Bonus</h2>
                 <p class="small" id="dailyBonusSubtitle">Activate a plan to claim daily bonuses.</p>
             </div>
-            <button class="btn green" style="padding:6px 12px; font-size:11px;" onclick="claimDailyBonus()">Claim</button>
+            <button class="btn green" style="padding:8px 14px; font-size:11px;" onclick="claimDailyBonus()">Claim</button>
         </div>
         
-        <div class="card glass" style="padding:16px;">
+        <div class="card glass" style="padding:18px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="font-size:15px; font-weight:800;">Lifetime Plans</h2>
+                <h2 style="font-size:16px; font-weight:800;">Lifetime Plans</h2>
                 <span id="planStatus" class="status">Not Active</span>
             </div>
-            <div id="plansGrid" class="plans-grid">
+            <div id="plansGrid" class="slider-container">
                 <div class="plan-card glass">
                     <h3>Plan 1</h3>
                     <div class="plan-price">PKR 500</div>
-                    <div class="small">Daily Earning: PKR 30</div>
-                    <button class="btn white-btn" style="width:100%; margin-top:10px; font-size:11px;" onclick="investInPlan('plan1')">Activate (500)</button>
+                    <div class="small" style="margin-bottom:12px;">Daily Earning: PKR 30</div>
+                    <button class="btn white-btn" style="width:100%; font-size:11px;" onclick="investInPlan('plan1')">Activate (500)</button>
                 </div>
                 <div class="plan-card glass">
                     <h3>Plan 2</h3>
                     <div class="plan-price">PKR 1,000</div>
-                    <div class="small">Daily Earning: PKR 50</div>
-                    <button class="btn white-btn" style="width:100%; margin-top:10px; font-size:11px;" onclick="investInPlan('plan2')">Activate (1000)</button>
+                    <div class="small" style="margin-bottom:12px;">Daily Earning: PKR 50</div>
+                    <button class="btn white-btn" style="width:100%; font-size:11px;" onclick="investInPlan('plan2')">Activate (1000)</button>
                 </div>
                 <div class="plan-card glass">
                     <h3>Plan 3</h3>
                     <div class="plan-price">PKR 2,000</div>
-                    <div class="small">Daily Task: PKR 60<br>Daily Check-in: PKR 40</div>
-                    <button class="btn white-btn" style="width:100%; margin-top:10px; font-size:11px;" onclick="investInPlan('plan3')">Activate (2000)</button>
+                    <div class="small" style="margin-bottom:12px;">Daily Task: PKR 60<br>Daily Check-in: PKR 40</div>
+                    <button class="btn white-btn" style="width:100%; font-size:11px;" onclick="investInPlan('plan3')">Activate (2000)</button>
                 </div>
             </div>
-            <div id="activePlanCard" class="hidden" style="margin-top:12px;"></div>
+            <div id="activePlanCard" class="hidden" style="margin-top:14px;"></div>
             <div id="planWarning" class="warning-box hidden">⚠ Weekly Target: You must add at least 1 member per week, otherwise earning will be stopped for that week.</div>
         </div>
 
-        <div class="history glass" style="margin-top:14px;">
-            <h2 style="font-size:15px; font-weight:800;">Daily Assignments</h2>
-            <div id="memberTasksList" style="margin-top:8px">No assignments available.</div>
+        <div class="history glass" style="margin-top:16px;">
+            <h2 style="font-size:16px; font-weight:800;">Daily Assignments</h2>
+            <div id="memberTasksList" style="margin-top:10px">No assignments available.</div>
         </div>
     </div>
 </section>
@@ -328,9 +333,9 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
     <div class="auth glass" style="width:min(520px, 100%);">
         <h1>My Profile</h1>
         <p class="sub">Account overview & financial stats</p>
-        <div class="info-box glass" style="margin-bottom:12px;">
+        <div class="info-box glass" style="margin-bottom:14px;">
             <p><strong>Username:</strong> <span id="profileUsername">-</span></p>
-            <p style="margin-top:4px;"><strong>Email:</strong> <span id="profileEmail">-</span></p>
+            <p style="margin-top:6px;"><strong>Email:</strong> <span id="profileEmail">-</span></p>
         </div>
         <div class="profile-stats-grid">
             <div class="stat-box glass">
@@ -346,11 +351,11 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
                 <div class="stat-val" id="profileTotalWithdraw">PKR 0</div>
             </div>
         </div>
-        <div style="display:flex; gap:8px; margin: 16px 0;">
+        <div style="display:flex; gap:10px; margin: 18px 0;">
             <button class="btn primary" style="flex:1;" onclick="switchTab('depositTab')"><i class="fa-solid fa-wallet"></i> Deposit</button>
             <button class="btn green" style="flex:1;" onclick="switchTab('withdrawTab')"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</button>
         </div>
-        <div style="margin-top:16px; display:flex; gap:8px;">
+        <div style="margin-top:18px; display:flex; gap:10px;">
             <button class="btn light" style="flex:1;" onclick="toggleTheme()">Switch Theme</button>
             <button class="btn red" style="flex:1;" onclick="logout()">Logout</button>
         </div>
@@ -362,11 +367,11 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
         <button class="record-sticker" onclick="openDepositHistory()">📜 Record</button>
         <h1>Deposit Funds</h1>
         <p class="sub">Add money securely to your account</p>
-        <div class="payment-card" style="margin:12px 0;">
+        <div class="payment-card" style="margin:14px 0;">
             <p class="small" style="color:#10b981; font-weight:800;">Easypaisa Account</p>
-            <div style="font-size:18px; font-weight:900; margin:2px 0;">03161325177</div>
+            <div style="font-size:18px; font-weight:900; margin:4px 0;">03161325177</div>
             <div style="font-size:11px; font-weight:700; color:var(--primary-color);">Title: ZULFIQAR</div>
-            <button class="btn light" style="padding:4px 8px; font-size:10px; margin-top:6px;" onclick="copyToClipboard('03161325177', 'Number Copied!')">Copy Number</button>
+            <button class="btn light" style="padding:4px 10px; font-size:10px; margin-top:8px;" onclick="copyToClipboard('03161325177', 'Number Copied!')">Copy Number</button>
         </div>
         <label>Amount (Min 500)</label>
         <input id="depositAmount" type="number" placeholder="500">
@@ -374,9 +379,9 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
         <input id="depositTx" type="text" placeholder="TRX ID">
         <label>Receipt Screenshot</label>
         <input id="depositDocument" type="file" accept="image/*">
-        <button class="btn green" style="width:100%; margin-top:14px; font-size:13px;" onclick="submitDeposit()">Submit Deposit</button>
+        <button class="btn green" style="width:100%; margin-top:16px; font-size:13px;" onclick="submitDeposit()">Submit Deposit</button>
         <div id="depositMessage"></div>
-        <button class="btn light" style="width:100%; margin-top:14px;" onclick="switchTab('dashboard')"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</button>
+        <button class="btn light" style="width:100%; margin-top:16px;" onclick="switchTab('dashboard')"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</button>
     </div>
 </section>
 
@@ -386,9 +391,9 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
         <h1>Request Payout</h1>
         <p class="sub">Withdraw your earnings easily</p>
         
-        <div id="withdrawAccountSetupBox" class="glass" style="padding:14px; margin-bottom:12px; background:rgba(147, 51, 234, 0.08);">
-            <h4 style="font-size:13px; font-weight:800; color:var(--primary-color); margin-bottom:4px;">⚠️ Setup Account First</h4>
-            <p class="small" style="margin-bottom:8px;">11 digits only (Easypaisa/JazzCash).</p>
+        <div id="withdrawAccountSetupBox" class="glass" style="padding:16px; margin-bottom:14px; background:rgba(147, 51, 234, 0.08);">
+            <h4 style="font-size:13px; font-weight:800; color:var(--primary-color); margin-bottom:6px;">⚠️ Setup Account First</h4>
+            <p class="small" style="margin-bottom:10px;">11 digits only (Easypaisa/JazzCash).</p>
             <label>Payment Method</label>
             <select id="setupMethod">
                 <option value="Easypaisa">Easypaisa</option>
@@ -398,23 +403,23 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
             <input id="setupName" type="text" placeholder="e.g. Muhammad Ali">
             <label>Account Number</label>
             <input id="setupAccountNum" type="text" maxlength="11" placeholder="03xxxxxxxx" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-            <button class="btn green" style="width:100%; margin-top:10px; font-size:12px;" onclick="saveWithdrawAccount()">Save Account</button>
+            <button class="btn green" style="width:100%; margin-top:12px; font-size:12px;" onclick="saveWithdrawAccount()">Save Account</button>
         </div>
 
         <div id="withdrawFormBox" class="hidden">
-            <div class="info-box glass" style="margin-bottom:10px; padding:12px;">
+            <div class="info-box glass" style="margin-bottom:12px; padding:14px;">
                 <p style="font-size:12px;"><strong>Method:</strong> <span id="dispMethod">-</span></p>
                 <p style="font-size:12px;"><strong>Name:</strong> <span id="dispName">-</span></p>
                 <p style="font-size:12px;"><strong>Account:</strong> <span id="dispAccount">-</span></p>
-                <button class="btn light" style="padding:3px 6px; font-size:9px; margin-top:6px;" onclick="editWithdrawAccount()">Edit Account</button>
+                <button class="btn light" style="padding:4px 8px; font-size:9px; margin-top:8px;" onclick="editWithdrawAccount()">Edit Account</button>
             </div>
             <label>Amount (Min 100)</label>
             <input id="withdrawAmount" type="number" placeholder="100">
-            <p class="small" style="margin-top:6px; color:var(--primary-color); font-weight:700;">⏱️ Received within 24-48 hours.</p>
-            <button class="btn primary" style="width:100%; margin-top:12px; font-size:13px;" onclick="submitWithdrawal()">Request Withdrawal</button>
+            <p class="small" style="margin-top:8px; color:var(--primary-color); font-weight:700;">⏱️ Processed instantly via local system.</p>
+            <button class="btn primary" style="width:100%; margin-top:14px; font-size:13px;" onclick="submitWithdrawal()">Request Withdrawal</button>
         </div>
         <div id="withdrawMessage"></div>
-        <button class="btn light" style="width:100%; margin-top:14px;" onclick="switchTab('dashboard')"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</button>
+        <button class="btn light" style="width:100%; margin-top:16px;" onclick="switchTab('dashboard')"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</button>
     </div>
 </section>
 
@@ -424,12 +429,12 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
         <p class="sub">Invite & earn commission automatically!</p>
         <div class="payment-card">
             <p class="small">Plan 1 / Plan 2 / Plan 3 Commission</p>
-            <div style="font-size:18px; font-weight:900; color:#10b981; margin:4px 0;">PKR 100 / PKR 200 / PKR 300</div>
+            <div style="font-size:18px; font-weight:900; color:#10b981; margin:6px 0;">PKR 100 / PKR 200 / PKR 300</div>
         </div>
         <div class="info-box glass" style="text-align:center;">
             <p class="small">Your Referral Code:</p>
-            <strong id="referralCodeDisplay" style="font-size:18px; color:var(--primary-color); display:block; margin:4px 0;">-</strong>
-            <button class="btn primary" style="width:100%; font-size:12px; margin-top:4px;" onclick="copyReferralLink()">Copy Link</button>
+            <strong id="referralCodeDisplay" style="font-size:18px; color:var(--primary-color); display:block; margin:6px 0;">-</strong>
+            <button class="btn primary" style="width:100%; font-size:12px; margin-top:6px;" onclick="copyReferralLink()">Copy Link</button>
         </div>
     </div>
 </section>
@@ -438,23 +443,23 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
     <div class="dashboard">
         <div class="welcome glass" style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-                <h1>Admin Control Panel</h1>
+                <h1 style="font-size:18px;">Admin Control Panel</h1>
             </div>
             <div style="display:flex; gap:8px;">
-                <button class="btn light" onclick="loadAdminData()" title="Refresh Admin Data"><i class="fa-solid fa-rotate"></i></button>
+                <button class="btn light" onclick="loadAdminData()" title="Refresh Data"><i class="fa-solid fa-rotate"></i></button>
                 <button class="btn red" onclick="logout()">Logout</button>
             </div>
         </div>
         
-        <div class="glass request" style="padding:16px; margin-bottom:14px;">
+        <div class="glass request" style="padding:18px; margin-bottom:16px;">
             <h2>Pending Deposit Requests</h2>
-            <div id="adminDepositsList" style="margin-top:10px;">Loading...</div>
+            <div id="adminDepositsList" style="margin-top:12px;">Loading...</div>
         </div>
-        <div class="glass request" style="padding:16px; margin-bottom:14px;">
+        <div class="glass request" style="padding:18px; margin-bottom:16px;">
             <h2>Pending Withdrawal Requests</h2>
-            <div id="adminWithdrawalsList" style="margin-top:10px;">Loading...</div>
+            <div id="adminWithdrawalsList" style="margin-top:12px;">Loading...</div>
         </div>
-        <div class="glass request" style="padding:16px; margin-bottom:14px;">
+        <div class="glass request" style="padding:18px; margin-bottom:16px;">
             <h2>Publish Assignment</h2>
             <label>Target Member</label>
             <select id="taskTargetUser">
@@ -464,47 +469,49 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
             <input id="taskTitle" type="text" placeholder="Task title">
             <label>Reward (PKR)</label>
             <input id="taskReward" type="number" placeholder="30">
-            <button class="btn primary" style="margin-top:10px;" onclick="publishTask()">Publish Task</button>
-            <div id="adminTasksList" style="margin-top:10px;"></div>
+            <button class="btn primary" style="margin-top:12px;" onclick="publishTask()">Publish Task</button>
+            <div id="adminTasksList" style="margin-top:12px;"></div>
         </div>
-        <div class="glass request" style="padding:16px; margin-bottom:14px;">
+        <div class="glass request" style="padding:18px; margin-bottom:16px;">
             <h2>Pending Submissions</h2>
-            <div id="adminTaskSubmissions" style="margin-top:10px;">Loading...</div>
+            <div id="adminTaskSubmissions" style="margin-top:12px;">Loading...</div>
         </div>
-        <div class="glass request" style="padding:16px; margin-bottom:14px;">
+        <div class="glass request" style="padding:18px; margin-bottom:16px;">
             <h2>All Registered Members</h2>
-            <div id="adminMembers" style="margin-top:10px;">Loading...</div>
+            <div id="adminMembers" style="margin-top:12px;">Loading...</div>
         </div>
     </div>
 </section>
 
 <script>
-// Firebase configuration linked from your Firebase Console project
-const firebaseConfig = {
-    apiKey: "AIzaSyCj7YTALV44mdFEng-zROYPUgqxa-sub18",
-    authDomain: "assignment-earn-f3fe5.firebaseapp.com",
-    projectId: "assignment-earn-f3fe5",
-    storageBucket: "assignment-earn-f3fe5.appspot.com",
-    messagingSenderId: "614446454268",
-    appId: "1:614446454268:web:217604c896e7287b019e1",
-    measurementId: "G-R64641P9K3"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
+const API_URL = "http://localhost:3000/api";
 let currentUserId = localStorage.getItem("AE_CURRENT_USER");
 let isAdmin = localStorage.getItem("AE_ADMIN") === "true";
 const MIN_DEPOSIT = 500;
+
+async function apiFetch(endpoint, options = {}) {
+    try {
+        let res = await fetch(API_URL + endpoint, options);
+        return await res.json();
+    } catch (err) {
+        console.error("API Error:", err);
+        return { success: false, message: "Server connection failed!" };
+    }
+}
+
+async function getDB() {
+    let res = await apiFetch("/data");
+    return res.success ? res.data : { users: [], deposits: [], withdrawals: [], tasks: [], submissions: [] };
+}
 
 function showLoader() { var l = document.getElementById("globalLoader"); if(l) l.classList.add("show"); }
 function hideLoader() { var l = document.getElementById("globalLoader"); if(l) l.classList.remove("show"); }
 
 function runWithLoader(actionFn) {
     showLoader();
-    setTimeout(function() {
-        try { if(typeof actionFn === "function") actionFn(); } catch(e) { console.error(e); } finally { hideLoader(); }
-    }, 150);
+    setTimeout(async function() {
+        try { if(typeof actionFn === "function") await actionFn(); } catch(e) { console.error(e); } finally { hideLoader(); }
+    }, 120);
 }
 
 function openLogin() { runWithLoader(function() { showPage('login'); }); }
@@ -523,17 +530,17 @@ function showPage(id){
 }
 
 function switchTab(tabId){
-    runWithLoader(function() {
+    runWithLoader(async function() {
         showPage(tabId);
         document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
         var map = { 'depositTab': 0, 'referTab': 1, 'dashboard': 2, 'withdrawTab': 3, 'profileTab': 4 };
         var items = document.querySelectorAll(".nav-item");
         if(items[map[tabId]]) items[map[tabId]].classList.add("active");
         
-        if(tabId === 'dashboard') loadDashboard();
-        if(tabId === 'referTab') loadReferTab();
-        if(tabId === 'profileTab') loadProfileTab();
-        if(tabId === 'withdrawTab') loadWithdrawTab();
+        if(tabId === 'dashboard') await loadDashboard();
+        if(tabId === 'referTab') await loadReferTab();
+        if(tabId === 'profileTab') await loadProfileTab();
+        if(tabId === 'withdrawTab') await loadWithdrawTab();
     });
 }
 
@@ -569,12 +576,12 @@ function copyToClipboard(text, msg) {
     navigator.clipboard.writeText(text).then(() => alert(msg));
 }
 
-function copyReferralLink() {
-    db.collection("users").doc(currentUserId).get().then(doc => {
-        if(!doc.exists) return;
-        var link = window.location.origin + window.location.pathname + "?ref=" + encodeURIComponent(doc.data().username);
-        copyToClipboard(link, "Referral link copied!");
-    });
+async function copyReferralLink() {
+    let db = await getDB();
+    let user = db.users.find(u => u.id === currentUserId);
+    if(!user) return;
+    var link = window.location.origin + window.location.pathname + "?ref=" + encodeURIComponent(user.username);
+    copyToClipboard(link, "Referral link copied!");
 }
 
 function compressImage(file, maxWidth=800, maxHeight=800, quality=0.7) {
@@ -598,7 +605,7 @@ function compressImage(file, maxWidth=800, maxHeight=800, quality=0.7) {
     });
 }
 
-function registerUser(){
+async function registerUser(){
     runWithLoader(async function() {
         var username = document.getElementById("signupUser").value.trim();
         var email = document.getElementById("signupEmail").value.trim();
@@ -614,38 +621,25 @@ function registerUser(){
             msg.className = "message error"; msg.textContent = "Passwords do not match."; return;
         }
 
-        var checkSnap = await db.collection("users").where("username", "==", username).get();
-        if(!checkSnap.empty){
-            msg.className = "message error"; msg.textContent = "Username already taken!"; return;
+        let res = await apiFetch("/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, email, password, referredBy: refCode })
+        });
+
+        if(!res.success){
+            msg.className = "message error"; msg.textContent = res.message; return;
         }
 
-        var userId = "user_" + Date.now();
-        var newUser = {
-            id: userId,
-            username: username,
-            email: email,
-            password: password,
-            referredBy: refCode,
-            balance: 0,
-            status: "pending",
-            planActive: false,
-            planType: null,
-            withdrawAccount: null,
-            totalEarning: 0,
-            totalWithdraw: 0,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        await db.collection("users").doc(userId).set(newUser);
-        currentUserId = userId;
+        currentUserId = res.user.id;
         isAdmin = false;
-        localStorage.setItem("AE_CURRENT_USER", userId);
+        localStorage.setItem("AE_CURRENT_USER", currentUserId);
         msg.textContent = "";
         document.getElementById("signupModal").classList.add("show");
     });
 }
 
-function loginUser(){
+async function loginUser(){
     runWithLoader(async function() {
         var uInput = document.getElementById("loginUser").value.trim();
         var pwd = document.getElementById("loginPassword").value;
@@ -661,28 +655,19 @@ function loginUser(){
             return;
         }
 
-        var snap = await db.collection("users").where("username", "==", uInput).get();
-        if(snap.empty){
-            snap = await db.collection("users").where("email", "==", uInput).get();
-        }
+        let db = await getDB();
+        var user = db.users.find(u => u.username === uInput || u.email === uInput);
 
-        if(snap.empty){
+        if(!user || user.password !== pwd){
             msg.className = "message error"; msg.textContent = "Invalid username/email or password."; return;
-        }
-
-        var userData = null;
-        snap.forEach(doc => { userData = doc.data(); });
-
-        if(userData.password !== pwd){
-            msg.className = "message error"; msg.textContent = "Invalid password."; return;
         }
 
         isAdmin = false;
         localStorage.removeItem("AE_ADMIN");
-        currentUserId = userData.id;
-        localStorage.setItem("AE_CURRENT_USER", userData.id);
+        currentUserId = user.id;
+        localStorage.setItem("AE_CURRENT_USER", user.id);
         msg.textContent = "";
-        document.getElementById("welcomeModalText").textContent = "Welcome back, " + userData.username + "!";
+        document.getElementById("welcomeModalText").textContent = "Welcome back, " + user.username + "!";
         document.getElementById("welcomeModal").classList.add("show");
     });
 }
@@ -701,9 +686,9 @@ function closeWelcomeModal(){
 
 async function loadDashboard(){
     if(!currentUserId) return;
-    var doc = await db.collection("users").doc(currentUserId).get();
-    if(!doc.exists) return;
-    var user = doc.data();
+    let db = await getDB();
+    var user = db.users.find(u => u.id === currentUserId);
+    if(!user) return;
 
     memberLoggedIn();
     document.getElementById("welcomeName").textContent = "Welcome, " + user.username;
@@ -731,86 +716,46 @@ async function loadDashboard(){
         status.textContent = "Not Active"; status.className = "status";
         warning.classList.add("hidden"); plansGrid.classList.remove("hidden"); activePlanCard.classList.add("hidden");
     }
-    loadMemberTasks(user);
+    loadMemberTasks(user, db.tasks);
 }
 
 async function claimDailyBonus(){
-    var userRef = db.collection("users").doc(currentUserId);
-    var doc = await userRef.get();
-    if(!doc.exists) return;
-    var user = doc.data();
-    
-    if(!user.planActive){
-        alert("You must activate a plan to claim daily bonuses.");
-        return;
-    }
-
-    var todayStr = new Date().toISOString().slice(0, 10);
-    if(user.lastBonusDate === todayStr){
-        alert("You have already claimed your daily bonus today!");
-        return;
-    }
-
-    var bonusAmount = (user.planType === 'plan3') ? 40 : 20;
-    await userRef.update({
-        balance: user.balance + bonusAmount,
-        totalEarning: (user.totalEarning || 0) + bonusAmount,
-        lastBonusDate: todayStr
+    let res = await apiFetch("/bonus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId })
     });
-
-    alert("Daily bonus of PKR " + bonusAmount + " claimed successfully!");
-    loadDashboard();
+    alert(res.message);
+    if(res.success) loadDashboard();
 }
 
 async function investInPlan(type){
     runWithLoader(async function() {
-        var userRef = db.collection("users").doc(currentUserId);
-        var doc = await userRef.get();
-        var user = doc.data();
-        var price = type === 'plan3' ? 2000 : (type === 'plan2' ? 1000 : 500);
-
-        if(user.balance < price){
-            alert("Insufficient balance! Deposit funds first.");
-            switchTab('depositTab');
+        let res = await apiFetch("/invest", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUserId, planType: type })
+        });
+        if(!res.success){
+            alert(res.message);
+            if(res.message.includes("Insufficient")) switchTab('depositTab');
             return;
         }
-
-        var newBalance = user.balance - price;
-        await userRef.update({
-            balance: newBalance,
-            planActive: true,
-            planType: type,
-            status: "approved"
-        });
-
-        if(user.referredBy){
-            var refSnap = await db.collection("users").where("username", "==", user.referredBy).get();
-            if(!refSnap.empty){
-                var refDoc = refSnap.docs[0];
-                var refData = refDoc.data();
-                var commission = type === 'plan3' ? 300 : (type === 'plan2' ? 200 : 100);
-                await db.collection("users").doc(refDoc.id).update({
-                    balance: refData.balance + commission,
-                    totalEarning: (refData.totalEarning || 0) + commission
-                });
-            }
-        }
-
         document.getElementById("congratsModalText").textContent = type.toUpperCase() + " Activated Successfully!";
         document.getElementById("congratsModal").classList.add("show");
     });
 }
 
-function loadReferTab(){
-    db.collection("users").doc(currentUserId).get().then(doc => {
-        if(doc.exists) document.getElementById("referralCodeDisplay").textContent = doc.data().username;
-    });
+async function loadReferTab(){
+    let db = await getDB();
+    let user = db.users.find(u => u.id === currentUserId);
+    if(user) document.getElementById("referralCodeDisplay").textContent = user.username;
 }
 
 async function loadProfileTab(){
-    var doc = await db.collection("users").doc(currentUserId).get();
-    if(!doc.exists) return;
-    var user = doc.data();
+    let db = await getDB();
+    let user = db.users.find(u => u.id === currentUserId);
+    if(!user) return;
     document.getElementById("profileUsername").textContent = user.username;
     document.getElementById("profileEmail").textContent = user.email;
     document.getElementById("profileBalanceBox").textContent = "PKR " + user.balance;
@@ -818,30 +763,25 @@ async function loadProfileTab(){
     document.getElementById("profileTotalWithdraw").textContent = "PKR " + (user.totalWithdraw || 0);
 }
 
-async function loadMemberTasks(user){
+function loadMemberTasks(user, tasks){
     var box = document.getElementById("memberTasksList");
-    var snap = await db.collection("tasks").get();
-    var myTasks = [];
-    snap.forEach(doc => {
-        var t = doc.data();
-        if(t.targetUserId === "all" || t.targetUserId === currentUserId) myTasks.push(t);
-    });
+    var myTasks = tasks.filter(t => t.targetUserId === "all" || t.targetUserId === currentUserId);
 
     if(!myTasks.length){ box.innerHTML = "<p class='small'>No assignments available.</p>"; return; }
     box.innerHTML = myTasks.map(t => `
-        <div class="task-item glass" style="display:flex; justify-content:space-between; align-items:center;">
-            <div><strong>${safe(t.title)}</strong><br>Reward: <span style="color:#10b981;">PKR ${t.reward}</span></div>
-            <button class="btn primary" style="padding:6px 12px; font-size:11px;" onclick="openTaskModal('${t.id}')">Submit Proof</button>
+        <div class="task-item glass">
+            <div><strong>${safe(t.title)}</strong><br><span class="small">Reward: <strong style="color:#10b981;">PKR ${t.reward}</strong></span></div>
+            <button class="btn primary" style="padding:6px 12px; font-size:11px;" onclick="openTaskModal('${t.id}')">Submit</button>
         </div>
     `).join("");
 }
 
-function openTaskModal(id){
-    db.collection("users").doc(currentUserId).get().then(doc => {
-        if(!doc.data().planActive) { alert("Activate a plan first!"); return; }
-        document.getElementById("taskModalId").value = id;
-        document.getElementById("taskModal").classList.add("show");
-    });
+async function openTaskModal(id){
+    let db = await getDB();
+    let user = db.users.find(u => u.id === currentUserId);
+    if(!user.planActive) { alert("Activate a plan first!"); return; }
+    document.getElementById("taskModalId").value = id;
+    document.getElementById("taskModal").classList.add("show");
 }
 
 function submitTaskProof(){
@@ -849,27 +789,21 @@ function submitTaskProof(){
         var id = document.getElementById("taskModalId").value;
         var file = document.getElementById("taskProofFile").files[0];
         var notes = document.getElementById("taskProofText").value.trim();
-        var userDoc = await db.collection("users").doc(currentUserId).get();
-        var user = userDoc.data();
-        var taskDoc = await db.collection("tasks").doc(id).get();
-        var task = taskDoc.exists ? taskDoc.data() : { title: "Task", reward: 0 };
-
         var img = await compressImage(file);
-        var subId = "sub_" + Date.now();
-        await db.collection("submissions").doc(subId).set({
-            id: subId, taskId: id, userId: currentUserId, username: user.username,
-            taskTitle: task.title, reward: task.reward, proofImage: img, notes: notes, status: "pending"
+
+        let res = await apiFetch("/submit-task", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ taskId: id, userId: currentUserId, proofImage: img, notes })
         });
 
         document.getElementById("taskModal").classList.remove("show");
-        alert("Proof submitted successfully!");
+        alert(res.message);
     });
 }
 
 function submitDeposit(){
     runWithLoader(async function() {
-        var userDoc = await db.collection("users").doc(currentUserId).get();
-        var user = userDoc.data();
         var amt = Number(document.getElementById("depositAmount").value);
         var tx = document.getElementById("depositTx").value.trim();
         var file = document.getElementById("depositDocument").files[0];
@@ -879,26 +813,28 @@ function submitDeposit(){
         if(!tx || !file){ msg.className = "message error"; msg.textContent = "Enter TRX ID and upload receipt."; return; }
 
         var img = await compressImage(file);
-        var depId = "dep_" + Date.now();
-        await db.collection("deposits").doc(depId).set({
-            id: depId, userId: currentUserId, username: user.username,
-            amount: amt, transactionId: tx, proofImage: img, status: "Pending"
+        let res = await apiFetch("/deposit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUserId, amount: amt, transactionId: tx, proofImage: img })
         });
 
-        msg.className = "message success";
-        msg.textContent = "Deposit submitted successfully! Admin will review it.";
-        document.getElementById("depositAmount").value = "";
-        document.getElementById("depositTx").value = "";
-        document.getElementById("depositDocument").value = "";
+        msg.className = res.success ? "message success" : "message error";
+        msg.textContent = res.message;
+        if(res.success){
+            document.getElementById("depositAmount").value = "";
+            document.getElementById("depositTx").value = "";
+            document.getElementById("depositDocument").value = "";
+        }
     });
 }
 
 async function openDepositHistory(){
-    var snap = await db.collection("deposits").where("userId", "==", currentUserId).get();
-    var bodyHtml = snap.empty ? "<p class='small'>No records.</p>" : "";
-    snap.forEach(doc => {
-        var d = doc.data();
-        bodyHtml += `<div class="history-item glass">PKR ${d.amount} (TRX: ${safe(d.transactionId)}) - <strong>${d.status}</strong></div>`;
+    let db = await getDB();
+    var deposits = db.deposits.filter(d => d.userId === currentUserId);
+    var bodyHtml = !deposits.length ? "<p class='small'>No records.</p>" : "";
+    deposits.forEach(d => {
+        bodyHtml += `<div class="history-item glass"><span>PKR ${d.amount} (TRX: ${safe(d.transactionId)})</span><strong>${d.status}</strong></div>`;
     });
     document.getElementById("recordsModalTitle").textContent = "Deposit History";
     document.getElementById("recordsModalBody").innerHTML = bodyHtml;
@@ -906,8 +842,8 @@ async function openDepositHistory(){
 }
 
 async function loadWithdrawTab(){
-    var doc = await db.collection("users").doc(currentUserId).get();
-    var user = doc.data();
+    let db = await getDB();
+    let user = db.users.find(u => u.id === currentUserId);
     var setupBox = document.getElementById("withdrawAccountSetupBox");
     var formBox = document.getElementById("withdrawFormBox");
 
@@ -929,192 +865,125 @@ async function saveWithdrawAccount(){
     if(!holderName || !accNum){ alert("Enter account holder name and number."); return; }
     if(!/^\d{11}$/.test(accNum)){ alert("Account number must be exactly 11 digits!"); return; }
 
-    await db.collection("users").doc(currentUserId).update({
-        withdrawAccount: { method, holderName, accountNum: accNum }
+    let res = await apiFetch("/save-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId, method, holderName, accountNum: accNum })
     });
-    alert("Withdrawal account saved successfully!");
+    alert(res.message);
     loadWithdrawTab();
 }
 
 async function editWithdrawAccount(){
-    await db.collection("users").doc(currentUserId).update({ withdrawAccount: null });
+    await apiFetch("/save-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId, method: null, holderName: null, accountNum: null })
+    });
     loadWithdrawTab();
 }
 
 function submitWithdrawal(){
     runWithLoader(async function() {
-        var userRef = db.collection("users").doc(currentUserId);
-        var doc = await userRef.get();
-        var user = doc.data();
         var amt = Number(document.getElementById("withdrawAmount").value);
         var msg = document.getElementById("withdrawMessage");
 
-        if(!user.planActive){ msg.className = "message error"; msg.textContent = "Activate a plan to withdraw!"; return; }
-        if(!amt || amt < 100){ msg.className = "message error"; msg.textContent = "Minimum withdrawal is PKR 100."; return; }
-        if(amt > user.balance){ msg.className = "message error"; msg.textContent = "Insufficient balance."; return; }
-        if(!user.withdrawAccount){ msg.className = "message error"; msg.textContent = "Setup withdrawal account first."; return; }
-
-        await userRef.update({ balance: user.balance - amt });
-        var witId = "wit_" + Date.now();
-        await db.collection("withdrawals").doc(witId).set({
-            id: witId, userId: currentUserId, username: user.username, amount: amt,
-            method: user.withdrawAccount.method, holderName: user.withdrawAccount.holderName,
-            accountNum: user.withdrawAccount.accountNum, status: "Pending"
+        let res = await apiFetch("/withdraw", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUserId, amount: amt })
         });
 
-        msg.className = "message success"; msg.textContent = "Withdrawal requested successfully!";
-        document.getElementById("withdrawAmount").value = "";
-        loadProfileTab();
+        msg.className = res.success ? "message success" : "message error";
+        msg.textContent = res.message;
+        if(res.success){
+            document.getElementById("withdrawAmount").value = "";
+            loadProfileTab();
+        }
     });
 }
 
 async function openWithdrawalHistory(){
-    var snap = await db.collection("withdrawals").where("userId", "==", currentUserId).get();
-    var bodyHtml = snap.empty ? "<p class='small'>No records.</p>" : "";
-    snap.forEach(doc => {
-        var w = doc.data();
-        bodyHtml += `<div class="history-item glass">PKR ${w.amount} (${w.method} - ${safe(w.accountNum)}) - <strong>${w.status}</strong></div>`;
+    let db = await getDB();
+    var withdrawals = db.withdrawals.filter(w => w.userId === currentUserId);
+    var bodyHtml = !withdrawals.length ? "<p class='small'>No records.</p>" : "";
+    withdrawals.forEach(w => {
+        bodyHtml += `<div class="history-item glass"><span>PKR ${w.amount} (${w.method})</span><strong>${w.status}</strong></div>`;
     });
     document.getElementById("recordsModalTitle").textContent = "Withdrawal History";
     document.getElementById("recordsModalBody").innerHTML = bodyHtml;
     document.getElementById("recordsModal").classList.add("show");
 }
 
-async function showAdmin(){
+function showAdmin(){
     showPage("admin");
     adminLoggedIn();
     loadAdminData();
 }
 
 async function loadAdminData(){
-    var depSnap = await db.collection("deposits").where("status", "==", "Pending").get();
+    let db = await getDB();
+    
+    var deposits = db.deposits.filter(d => d.status === "Pending");
     var depContainer = document.getElementById("adminDepositsList");
-    depContainer.innerHTML = depSnap.empty ? "<p class='small'>No pending deposits.</p>" : depSnap.docs.map(doc => {
-        var d = doc.data();
-        return `<div class="glass request" style="padding:12px; margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+    depContainer.innerHTML = !deposits.length ? "<p class='small'>No pending deposits.</p>" : deposits.map(d => `
+        <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
             <div><strong>User: ${safe(d.username)}</strong><br>Amount: PKR ${d.amount} | TRX: ${safe(d.transactionId)}${d.proofImage ? `<br><a href="${d.proofImage}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Receipt</a>` : ""}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:4px 8px; font-size:11px;" onclick="approveDeposit('${d.id}')">Approve</button><button class="btn red" style="padding:4px 8px; font-size:11px;" onclick="rejectDeposit('${d.id}')">Reject</button></div>
-        </div>`;
-    }).join("");
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/approve-deposit', '${d.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/reject-deposit', '${d.id}')">Reject</button></div>
+        </div>
+    `).join("");
 
-    var witSnap = await db.collection("withdrawals").where("status", "==", "Pending").get();
+    var withdrawals = db.withdrawals.filter(w => w.status === "Pending");
     var witContainer = document.getElementById("adminWithdrawalsList");
-    witContainer.innerHTML = witSnap.empty ? "<p class='small'>No pending withdrawals.</p>" : witSnap.docs.map(doc => {
-        var w = doc.data();
-        return `<div class="glass request" style="padding:12px; margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+    witContainer.innerHTML = !withdrawals.length ? "<p class='small'>No pending withdrawals.</p>" : withdrawals.map(w => `
+        <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
             <div><strong>User: ${safe(w.username)}</strong><br>Amount: PKR ${w.amount} | ${safe(w.method)}<br>Name: ${safe(w.holderName)} | Acc: ${safe(w.accountNum)}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:4px 8px; font-size:11px;" onclick="approveWithdrawal('${w.id}')">Approve</button><button class="btn red" style="padding:4px 8px; font-size:11px;" onclick="rejectWithdrawal('${w.id}')">Reject</button></div>
-        </div>`;
-    }).join("");
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/approve-withdrawal', '${w.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/reject-withdrawal', '${w.id}')">Reject</button></div>
+        </div>
+    `).join("");
 
-    var subSnap = await db.collection("submissions").where("status", "==", "pending").get();
+    var submissions = db.submissions.filter(s => s.status === "pending");
     var subContainer = document.getElementById("adminTaskSubmissions");
-    subContainer.innerHTML = subSnap.empty ? "<p class='small'>No pending task submissions.</p>" : subSnap.docs.map(doc => {
-        var s = doc.data();
-        return `<div class="glass request" style="padding:12px; margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
-            <div><strong>User: ${safe(s.username)}</strong><br>Task: ${safe(s.taskTitle)} | Reward: PKR ${s.reward}${s.proofImage ? `<br><a href="${s.proofImage}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Proof Image</a>` : ""}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:4px 8px; font-size:11px;" onclick="approveSubmission('${s.id}')">Approve</button><button class="btn red" style="padding:4px 8px; font-size:11px;" onclick="rejectSubmission('${s.id}')">Reject</button></div>
-        </div>`;
-    }).join("");
+    subContainer.innerHTML = !submissions.length ? "<p class='small'>No pending submissions.</p>" : submissions.map(s => `
+        <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+            <div><strong>User: ${safe(s.username)}</strong><br>Task: ${safe(s.taskTitle)} | Reward: PKR ${s.reward}${s.proofImage ? `<br><a href="${s.proofImage}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Proof</a>` : ""}</div>
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/approve-submission', '${s.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('/admin/reject-submission', '${s.id}')">Reject</button></div>
+        </div>
+    `).join("");
 
-    var usersSnap = await db.collection("users").get();
     var targetSelect = document.getElementById("taskTargetUser");
     var membersContainer = document.getElementById("adminMembers");
     
     var usersHtml = `<option value="all">All Members</option>`;
     var membersListHtml = "";
-    usersSnap.forEach(doc => {
-        var u = doc.data();
+    db.users.forEach(u => {
         usersHtml += `<option value="${u.id}">${safe(u.username)}</option>`;
         var planText = u.planActive ? `Active (${(u.planType || 'plan1').toUpperCase()})` : "Not Active";
         membersListHtml += `<div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
             <div><strong>${safe(u.username)}</strong> (${safe(u.email)})<br>Balance: PKR ${u.balance} | Plan: <span class="status ${u.planActive ? 'active' : ''}">${planText}</span></div>
-            <button class="btn red" style="padding:4px 8px; font-size:11px;" onclick="deleteUser('${u.id}')">Delete</button>
+            <button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="deleteUser('${u.id}')">Delete</button>
         </div>`;
     });
     targetSelect.innerHTML = usersHtml;
     membersContainer.innerHTML = membersListHtml || "<p class='small'>No registered members yet.</p>";
 }
 
-async function approveDeposit(id){
-    var docRef = db.collection("deposits").doc(id);
-    var doc = await docRef.get();
-    if(!doc.exists) return;
-    var d = doc.data();
-    await docRef.update({ status: "Approved" });
-
-    var userRef = db.collection("users").doc(d.userId);
-    var userDoc = await userRef.get();
-    if(userDoc.exists){
-        await userRef.update({
-            balance: userDoc.data().balance + d.amount,
-            totalEarning: (userDoc.data().totalEarning || 0) + d.amount
-        });
-    }
-    loadAdminData();
-}
-
-async function rejectDeposit(id){
-    await db.collection("deposits").doc(id).update({ status: "Rejected" });
-    loadAdminData();
-}
-
-async function approveWithdrawal(id){
-    var docRef = db.collection("withdrawals").doc(id);
-    var doc = await docRef.get();
-    if(!doc.exists) return;
-    var w = doc.data();
-    await docRef.update({ status: "Approved" });
-
-    var userRef = db.collection("users").doc(w.userId);
-    var userDoc = await userRef.get();
-    if(userDoc.exists){
-        await userRef.update({ totalWithdraw: (userDoc.data().totalWithdraw || 0) + w.amount });
-    }
-    loadAdminData();
-}
-
-async function rejectWithdrawal(id){
-    var docRef = db.collection("withdrawals").doc(id);
-    var doc = await docRef.get();
-    if(!doc.exists) return;
-    var w = doc.data();
-    await docRef.update({ status: "Rejected" });
-
-    var userRef = db.collection("users").doc(w.userId);
-    var userDoc = await userRef.get();
-    if(userDoc.exists){
-        await userRef.update({ balance: userDoc.data().balance + w.amount });
-    }
-    loadAdminData();
-}
-
-async function approveSubmission(id){
-    var docRef = db.collection("submissions").doc(id);
-    var doc = await docRef.get();
-    if(!doc.exists) return;
-    var s = doc.data();
-    await docRef.update({ status: "approved" });
-
-    var userRef = db.collection("users").doc(s.userId);
-    var userDoc = await userRef.get();
-    if(userDoc.exists){
-        await userRef.update({
-            balance: userDoc.data().balance + s.reward,
-            totalEarning: (userDoc.data().totalEarning || 0) + s.reward
-        });
-    }
-    loadAdminData();
-}
-
-async function rejectSubmission(id){
-    await db.collection("submissions").doc(id).update({ status: "rejected" });
+async function adminAction(endpoint, id){
+    await apiFetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+    });
     loadAdminData();
 }
 
 async function deleteUser(id){
     if(confirm("Are you sure you want to delete this user?")) {
-        await db.collection("users").doc(id).delete();
+        await apiFetch("/admin/delete-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id })
+        });
         loadAdminData();
     }
 }
@@ -1125,9 +994,12 @@ async function publishTask(){
     var targetUserId = document.getElementById("taskTargetUser").value;
 
     if(!title || !reward) return;
-    var taskId = "task_" + Date.now();
-    await db.collection("tasks").doc(taskId).set({ id: taskId, title, reward, targetUserId });
-    alert("Task published successfully!");
+    let res = await apiFetch("/admin/publish-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, reward, targetUserId })
+    });
+    alert(res.message);
     document.getElementById("taskTitle").value = "";
     document.getElementById("taskReward").value = "";
     loadAdminData();
@@ -1146,16 +1018,16 @@ function safe(str){
     return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-window.onload = function() {
+window.onload = async function() {
     var ref = new URLSearchParams(window.location.search).get('ref');
     if(ref) document.getElementById("signupRef").value = ref;
 
     if(isAdmin) showAdmin();
     else if(currentUserId) {
-        db.collection("users").doc(currentUserId).get().then(doc => {
-            if(doc.exists) { memberLoggedIn(); switchTab("dashboard"); }
-            else { logout(); showPage("home"); }
-        });
+        let db = await getDB();
+        let user = db.users.find(u => u.id === currentUserId);
+        if(user) { memberLoggedIn(); switchTab("dashboard"); }
+        else { logout(); showPage("home"); }
     } else showPage("home");
 };
 </script>
