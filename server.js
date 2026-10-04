@@ -249,4 +249,10 @@ app.get('/', (req, res) => {
 app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// Vercel serverless function ke liye export zaroori hai
+module.exports = app;
