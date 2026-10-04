@@ -6,6 +6,8 @@
 <title>Assignment Earn - Smart Earning Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Supabase JS Library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 :root {
@@ -415,7 +417,7 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
             </div>
             <label>Amount (Min 100)</label>
             <input id="withdrawAmount" type="number" placeholder="100">
-            <p class="small" style="margin-top:8px; color:var(--primary-color); font-weight:700;">⏱️ Processed securely via server.</p>
+            <p class="small" style="margin-top:8px; color:var(--primary-color); font-weight:700;">⏱️ Processed securely via Supabase.</p>
             <button class="btn primary" style="width:100%; margin-top:14px; font-size:13px;" onclick="submitWithdrawal()">Request Withdrawal</button>
         </div>
         <div id="withdrawMessage"></div>
@@ -484,25 +486,15 @@ input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(147
 </section>
 
 <script>
-const API_URL = "/api";
+// --- SUPABASE CONFIGURATION ---
+const SUPABASE_URL = 'YAHAN_APNI_PROJECT_URL_PASTE_KAREIN';
+const SUPABASE_ANON_KEY = 'YAHAN_APNI_ANON_KEY_PASTE_KAREIN';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let currentUserId = localStorage.getItem("AE_CURRENT_USER");
 let isAdmin = localStorage.getItem("AE_ADMIN") === "true";
 const MIN_DEPOSIT = 500;
-
-async function apiFetch(endpoint, options = {}) {
-    try {
-        let res = await fetch(API_URL + endpoint, options);
-        return await res.json();
-    } catch(err) {
-        console.error(err);
-        return { success: false, message: "Server connection failed!" };
-    }
-}
-
-async function getDB() {
-    let res = await apiFetch("/data");
-    return res.success ? res.data : { users: [], deposits: [], withdrawals: [], tasks: [], submissions: [] };
-}
 
 function showLoader() { var l = document.getElementById("globalLoader"); if(l) l.classList.add("show"); }
 function hideLoader() { var l = document.getElementById("globalLoader"); if(l) l.classList.remove("show"); }
@@ -577,8 +569,7 @@ function copyToClipboard(text, msg) {
 }
 
 async function copyReferralLink() {
-    let db = await getDB();
-    let user = db.users.find(u => u.id === currentUserId);
+    let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
     if(!user) return;
     var baseUrl = window.location.href.split('?')[0];
     var link = baseUrl + "?ref=" + encodeURIComponent(user.username);
@@ -621,17 +612,21 @@ async function registerUser(){
             msg.className = "message error"; msg.textContent = "Passwords do not match."; return;
         }
 
-        let res = await apiFetch("/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password })
-        });
-
-        if(!res.success){
-            msg.className = "message error"; msg.textContent = res.message; return;
+        // Check if username exists
+        let { data: existing } = await supabase.from('users').select('*').eq('username', username).single();
+        if(existing){
+            msg.className = "message error"; msg.textContent = "Username already taken."; return;
         }
 
-        currentUserId = res.user.id;
+        let { data, error } = await supabase.from('users').insert([{
+            username, email, password, balance: 0, total_earning: 0, total_withdraw: 0, plan_active: false
+        }]).select();
+
+        if(error){
+            msg.className = "message error"; msg.textContent = error.message; return;
+        }
+
+        currentUserId = data[0].id;
         isAdmin = false;
         localStorage.setItem("AE_CURRENT_USER", currentUserId);
         msg.textContent = "";
@@ -655,8 +650,7 @@ async function loginUser(){
             return;
         }
 
-        let db = await getDB();
-        var user = db.users.find(u => u.username === uInput || u.email === uInput);
+        let { data: user } = await supabase.from('users').select('*').or(`username.eq.${uInput},email.eq.${uInput}`).single();
 
         if(!user || user.password !== pwd){
             msg.className = "message error"; msg.textContent = "Invalid username/email or password."; return;
@@ -686,8 +680,7 @@ function closeWelcomeModal(){
 
 async function loadDashboard(){
     if(!currentUserId) return;
-    let db = await getDB();
-    var user = db.users.find(u => u.id === currentUserId);
+    let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
     if(!user) return;
 
     memberLoggedIn();
@@ -700,75 +693,79 @@ async function loadDashboard(){
     var plansGrid = document.getElementById("plansGrid");
     var activePlanCard = document.getElementById("activePlanCard");
 
-    if(user.planActive){
-        status.textContent = "Active (" + (user.planType || 'plan1').toUpperCase() + ")";
+    if(user.plan_active){
+        status.textContent = "Active (" + (user.plan_type || 'plan1').toUpperCase() + ")";
         status.className = "status active";
         warning.classList.remove("hidden");
         plansGrid.classList.add("hidden");
         activePlanCard.classList.remove("hidden");
 
         var pName = 'Plan 1', pPrice = 'PKR 500', pDetails = 'Daily Earning: PKR 30';
-        if(user.planType === 'plan2') { pName = 'Plan 2'; pPrice = 'PKR 1,000'; pDetails = 'Daily Earning: PKR 50'; }
-        if(user.planType === 'plan3') { pName = 'Plan 3'; pPrice = 'PKR 2,000'; pDetails = 'Daily Task: PKR 60 | Check-in: PKR 40'; }
+        if(user.plan_type === 'plan2') { pName = 'Plan 2'; pPrice = 'PKR 1,000'; pDetails = 'Daily Earning: PKR 50'; }
+        if(user.plan_type === 'plan3') { pName = 'Plan 3'; pPrice = 'PKR 2,000'; pDetails = 'Daily Task: PKR 60 | Check-in: PKR 40'; }
         
         activePlanCard.innerHTML = `<div class="plan-card glass" style="border: 2px solid var(--green-accent);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><h3 style="color:var(--primary-color);">${pName} (Lifetime)</h3><span class="status active">Activated</span></div><div class="plan-price">${pPrice}</div><div class="small">${pDetails}</div></div>`;
     } else {
         status.textContent = "Not Active"; status.className = "status";
         warning.classList.add("hidden"); plansGrid.classList.remove("hidden"); activePlanCard.classList.add("hidden");
     }
-    loadMemberTasks(user, db.tasks);
+    loadMemberTasks(user);
 }
 
 async function claimDailyBonus(){
-    let res = await apiFetch("/bonus", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUserId })
-    });
-    alert(res.message);
-    if(res.success) loadDashboard();
+    let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
+    if(!user.plan_active){ alert("Activate a plan first!"); return; }
+    
+    // Simple bonus logic
+    let bonusAmt = user.plan_type === 'plan3' ? 40 : 20;
+    let newBal = Number(user.balance) + bonusAmt;
+    let newEarn = Number(user.total_earning || 0) + bonusAmt;
+
+    await supabase.from('users').update({ balance: newBal, total_earning: newEarn }).eq('id', currentUserId);
+    alert("Daily bonus claimed successfully: PKR " + bonusAmt);
+    loadDashboard();
 }
 
 async function investInPlan(type){
     runWithLoader(async function() {
-        let res = await apiFetch("/invest", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUserId, planType: type })
-        });
-        if(!res.success){
-            alert(res.message);
-            if(res.message.includes("Insufficient")) switchTab('depositTab');
+        let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
+        let cost = type === 'plan3' ? 2000 : (type === 'plan2' ? 1000 : 500);
+
+        if(user.balance < cost){
+            alert("Insufficient balance! Please deposit first.");
+            switchTab('depositTab');
             return;
         }
+
+        let newBal = user.balance - cost;
+        await supabase.from('users').update({ balance: newBal, plan_active: true, plan_type: type }).eq('id', currentUserId);
+
         document.getElementById("congratsModalText").textContent = type.toUpperCase() + " Activated Successfully!";
         document.getElementById("congratsModal").classList.add("show");
     });
 }
 
 async function loadReferTab(){
-    let db = await getDB();
-    let user = db.users.find(u => u.id === currentUserId);
+    let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
     if(user) document.getElementById("referralCodeDisplay").textContent = user.username;
 }
 
 async function loadProfileTab(){
-    let db = await getDB();
-    let user = db.users.find(u => u.id === currentUserId);
+    let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
     if(!user) return;
     document.getElementById("profileUsername").textContent = user.username;
     document.getElementById("profileEmail").textContent = user.email;
     document.getElementById("profileBalanceBox").textContent = "PKR " + user.balance;
-    document.getElementById("profileTotalEarning").textContent = "PKR " + (user.totalEarning || 0);
-    document.getElementById("profileTotalWithdraw").textContent = "PKR " + (user.totalWithdraw || 0);
+    document.getElementById("profileTotalEarning").textContent = "PKR " + (user.total_earning || 0);
+    document.getElementById("profileTotalWithdraw").textContent = "PKR " + (user.total_withdraw || 0);
 }
 
-function loadMemberTasks(user, tasks){
+async function loadMemberTasks(user){
     var box = document.getElementById("memberTasksList");
-    var myTasks = tasks.filter(t => t.targetUserId === "all" || t.targetUserId === currentUserId);
-
-    if(!myTasks.length){ box.innerHTML = "<p class='small'>No assignments available.</p>"; return; }
-    box.innerHTML = myTasks.map(t => `
+    let { data: tasks } = await supabase.from('tasks').select('*');
+    if(!tasks || !tasks.length){ box.innerHTML = "<p class='small'>No assignments available.</p>"; return; }
+    
+    box.innerHTML = tasks.map(t => `
         <div class="task-item glass">
             <div><strong>${safe(t.title)}</strong><br><span class="small">Reward: <strong style="color:#10b981;">PKR ${t.reward}</strong></span></div>
             <button class="btn primary" style="padding:6px 12px; font-size:11px;" onclick="openTaskModal('${t.id}')">Submit</button>
@@ -777,28 +774,35 @@ function loadMemberTasks(user, tasks){
 }
 
 async function openTaskModal(id){
-    let db = await getDB();
-    let user = db.users.find(u => u.id === currentUserId);
-    if(!user.planActive) { alert("Activate a plan first!"); return; }
+    let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
+    if(!user.plan_active) { alert("Activate a plan first!"); return; }
     document.getElementById("taskModalId").value = id;
     document.getElementById("taskModal").classList.add("show");
 }
 
 function submitTaskProof(){
     runWithLoader(async function() {
-        var id = document.getElementById("taskModalId").value;
+        var taskId = document.getElementById("taskModalId").value;
         var file = document.getElementById("taskProofFile").files[0];
         var notes = document.getElementById("taskProofText").value.trim();
         var img = await compressImage(file);
 
-        let res = await apiFetch("/submit-task", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ taskId: id, userId: currentUserId, proofImage: img, notes })
-        });
+        let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
+        let { data: task } = await supabase.from('tasks').select('*').eq('id', taskId).single();
+
+        await supabase.from('submissions').insert([{
+            user_id: currentUserId,
+            username: user.username,
+            task_id: taskId,
+            task_title: task ? task.title : 'Assignment',
+            reward: task ? task.reward : 30,
+            proof_image: img,
+            notes: notes,
+            status: 'pending'
+        }]);
 
         document.getElementById("taskModal").classList.remove("show");
-        alert(res.message);
+        alert("Assignment proof submitted successfully!");
     });
 }
 
@@ -812,46 +816,51 @@ function submitDeposit(){
         if(!amt || amt < MIN_DEPOSIT){ msg.className = "message error"; msg.textContent = "Minimum deposit is 500."; return; }
         if(!tx || !file){ msg.className = "message error"; msg.textContent = "Enter TRX ID and upload receipt."; return; }
 
+        let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
         var img = await compressImage(file);
-        let res = await apiFetch("/deposit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUserId, amount: amt, transactionId: tx, proofImage: img })
-        });
 
-        msg.className = res.success ? "message success" : "message error";
-        msg.textContent = res.message;
-        if(res.success){
-            document.getElementById("depositAmount").value = "";
-            document.getElementById("depositTx").value = "";
-            document.getElementById("depositDocument").value = "";
-        }
+        let { error } = await supabase.from('deposits').insert([{
+            user_id: currentUserId,
+            username: user.username,
+            amount: amt,
+            transaction_id: tx,
+            proof_image: img,
+            status: 'Pending'
+        }]);
+
+        if(error){ msg.className = "message error"; msg.textContent = error.message; return; }
+
+        msg.className = "message success";
+        msg.textContent = "Deposit submitted successfully! Awaiting admin approval.";
+        document.getElementById("depositAmount").value = "";
+        document.getElementById("depositTx").value = "";
+        document.getElementById("depositDocument").value = "";
     });
 }
 
 async function openDepositHistory(){
-    let db = await getDB();
-    var deposits = db.deposits.filter(d => d.userId === currentUserId);
-    var bodyHtml = !deposits.length ? "<p class='small'>No records.</p>" : "";
-    deposits.forEach(d => {
-        bodyHtml += `<div class="history-item glass"><span>PKR ${d.amount} (TRX: ${safe(d.transactionId)})</span><strong>${d.status}</strong></div>`;
-    });
+    let { data: deposits } = await supabase.from('deposits').select('*').eq('user_id', currentUserId);
+    var bodyHtml = !deposits || !deposits.length ? "<p class='small'>No records.</p>" : "";
+    if(deposits){
+        deposits.forEach(d => {
+            bodyHtml += `<div class="history-item glass"><span>PKR ${d.amount} (TRX: ${safe(d.transaction_id)})</span><strong>${d.status}</strong></div>`;
+        });
+    }
     document.getElementById("recordsModalTitle").textContent = "Deposit History";
     document.getElementById("recordsModalBody").innerHTML = bodyHtml;
     document.getElementById("recordsModal").classList.add("show");
 }
 
 async function loadWithdrawTab(){
-    let db = await getDB();
-    let user = db.users.find(u => u.id === currentUserId);
+    let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
     var setupBox = document.getElementById("withdrawAccountSetupBox");
     var formBox = document.getElementById("withdrawFormBox");
 
-    if(user.withdrawAccount && user.withdrawAccount.accountNum){
+    if(user.withdraw_account && user.withdraw_account.accountNum){
         setupBox.classList.add("hidden"); formBox.classList.remove("hidden");
-        document.getElementById("dispMethod").textContent = user.withdrawAccount.method;
-        document.getElementById("dispName").textContent = user.withdrawAccount.holderName;
-        document.getElementById("dispAccount").textContent = user.withdrawAccount.accountNum;
+        document.getElementById("dispMethod").textContent = user.withdraw_account.method;
+        document.getElementById("dispName").textContent = user.withdraw_account.holderName;
+        document.getElementById("dispAccount").textContent = user.withdraw_account.accountNum;
     } else {
         setupBox.classList.remove("hidden"); formBox.classList.add("hidden");
     }
@@ -865,21 +874,14 @@ async function saveWithdrawAccount(){
     if(!holderName || !accNum){ alert("Enter account holder name and number."); return; }
     if(!/^\d{11}$/.test(accNum)){ alert("Account number must be exactly 11 digits!"); return; }
 
-    let res = await apiFetch("/save-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUserId, method, holderName, accountNum: accNum })
-    });
-    alert(res.message);
+    let accObj = { method, holderName, accountNum: accNum };
+    await supabase.from('users').update({ withdraw_account: accObj }).eq('id', currentUserId);
+    alert("Account saved successfully!");
     loadWithdrawTab();
 }
 
 async function editWithdrawAccount(){
-    await apiFetch("/save-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUserId, method: null, holderName: null, accountNum: null })
-    });
+    await supabase.from('users').update({ withdraw_account: null }).eq('id', currentUserId);
     loadWithdrawTab();
 }
 
@@ -888,28 +890,38 @@ function submitWithdrawal(){
         var amt = Number(document.getElementById("withdrawAmount").value);
         var msg = document.getElementById("withdrawMessage");
 
-        let res = await apiFetch("/withdraw", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUserId, amount: amt })
-        });
+        let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
+        if(!amt || amt < 100){ msg.className = "message error"; msg.textContent = "Minimum withdrawal is PKR 100."; return; }
+        if(user.balance < amt){ msg.className = "message error"; msg.textContent = "Insufficient balance."; return; }
 
-        msg.className = res.success ? "message success" : "message error";
-        msg.textContent = res.message;
-        if(res.success){
-            document.getElementById("withdrawAmount").value = "";
-            loadProfileTab();
-        }
+        let acc = user.withdraw_account || {};
+        let { error } = await supabase.from('withdrawals').insert([{
+            user_id: currentUserId,
+            username: user.username,
+            amount: amt,
+            method: acc.method || 'Easypaisa',
+            account_number: acc.accountNum || '',
+            holder_name: acc.holderName || '',
+            status: 'Pending'
+        }]);
+
+        if(error){ msg.className = "message error"; msg.textContent = error.message; return; }
+
+        msg.className = "message success";
+        msg.textContent = "Withdrawal request submitted successfully!";
+        document.getElementById("withdrawAmount").value = "";
+        loadProfileTab();
     });
 }
 
 async function openWithdrawalHistory(){
-    let db = await getDB();
-    var withdrawals = db.withdrawals.filter(w => w.userId === currentUserId);
-    var bodyHtml = !withdrawals.length ? "<p class='small'>No records.</p>" : "";
-    withdrawals.forEach(w => {
-        bodyHtml += `<div class="history-item glass"><span>PKR ${w.amount} (${w.method})</span><strong>${w.status}</strong></div>`;
-    });
+    let { data: withdrawals } = await supabase.from('withdrawals').select('*').eq('user_id', currentUserId);
+    var bodyHtml = !withdrawals || !withdrawals.length ? "<p class='small'>No records.</p>" : "";
+    if(withdrawals){
+        withdrawals.forEach(w => {
+            bodyHtml += `<div class="history-item glass"><span>PKR ${w.amount} (${w.method})</span><strong>${w.status}</strong></div>`;
+        });
+    }
     document.getElementById("recordsModalTitle").textContent = "Withdrawal History";
     document.getElementById("recordsModalBody").innerHTML = bodyHtml;
     document.getElementById("recordsModal").classList.add("show");
@@ -922,68 +934,111 @@ function showAdmin(){
 }
 
 async function loadAdminData(){
-    let db = await getDB();
-    
-    var deposits = db.deposits.filter(d => d.status === "Pending");
+    // 1. Deposits
+    let { data: deposits } = await supabase.from('deposits').select('*').eq('status', 'Pending');
     var depContainer = document.getElementById("adminDepositsList");
-    depContainer.innerHTML = !deposits.length ? "<p class='small'>No pending deposits.</p>" : deposits.map(d => `
+    depContainer.innerHTML = !deposits || !deposits.length ? "<p class='small'>No pending deposits.</p>" : deposits.map(d => `
         <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-            <div><strong>User: ${safe(d.username)}</strong><br>Amount: PKR ${d.amount} | TRX: ${safe(d.transactionId)}${d.proofImage ? `<br><a href="${d.proofImage}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Receipt</a>` : ""}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('approve-deposit', '${d.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('reject-deposit', '${d.id}')">Reject</button></div>
+            <div><strong>User: ${safe(d.username)}</strong><br>Amount: PKR ${d.amount} | TRX: ${safe(d.transaction_id)}${d.proof_image ? `<br><a href="${d.proof_image}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Receipt</a>` : ""}</div>
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminApproveDeposit('${d.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminRejectDeposit('${d.id}')">Reject</button></div>
         </div>
     `).join("");
 
-    var withdrawals = db.withdrawals.filter(w => w.status === "Pending");
+    // 2. Withdrawals
+    let { data: withdrawals } = await supabase.from('withdrawals').select('*').eq('status', 'Pending');
     var witContainer = document.getElementById("adminWithdrawalsList");
-    witContainer.innerHTML = !withdrawals.length ? "<p class='small'>No pending withdrawals.</p>" : withdrawals.map(w => `
+    witContainer.innerHTML = !withdrawals || !withdrawals.length ? "<p class='small'>No pending withdrawals.</p>" : withdrawals.map(w => `
         <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-            <div><strong>User: ${safe(w.username)}</strong><br>Amount: PKR ${w.amount} | ${safe(w.method)}<br>Name: ${safe(w.holderName)} | Acc: ${safe(w.accountNum)}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('approve-withdrawal', '${w.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('reject-withdrawal', '${w.id}')">Reject</button></div>
+            <div><strong>User: ${safe(w.username)}</strong><br>Amount: PKR ${w.amount} | ${safe(w.method)}<br>Name: ${safe(w.holder_name)} | Acc: ${safe(w.account_number)}</div>
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminApproveWithdrawal('${w.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminRejectWithdrawal('${w.id}')">Reject</button></div>
         </div>
     `).join("");
 
-    var submissions = db.submissions.filter(s => s.status === "pending");
+    // 3. Submissions
+    let { data: submissions } = await supabase.from('submissions').select('*').eq('status', 'pending');
     var subContainer = document.getElementById("adminTaskSubmissions");
-    subContainer.innerHTML = !submissions.length ? "<p class='small'>No pending submissions.</p>" : submissions.map(s => `
+    subContainer.innerHTML = !submissions || !submissions.length ? "<p class='small'>No pending submissions.</p>" : submissions.map(s => `
         <div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-            <div><strong>User: ${safe(s.username)}</strong><br>Task: ${safe(s.taskTitle)} | Reward: PKR ${s.reward}${s.proofImage ? `<br><a href="${s.proofImage}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Proof</a>` : ""}</div>
-            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminAction('approve-submission', '${s.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminAction('reject-submission', '${s.id}')">Reject</button></div>
+            <div><strong>User: ${safe(s.username)}</strong><br>Task: ${safe(s.task_title)} | Reward: PKR ${s.reward}${s.proof_image ? `<br><a href="${s.proof_image}" target="_blank" style="color:var(--primary-color); font-size:11px;">View Proof</a>` : ""}</div>
+            <div style="display:flex; gap:6px;"><button class="btn green" style="padding:6px 10px; font-size:11px;" onclick="adminApproveSubmission('${s.id}')">Approve</button><button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="adminRejectSubmission('${s.id}')">Reject</button></div>
         </div>
     `).join("");
 
+    // 4. Members & Dropdown
+    let { data: users } = await supabase.from('users').select('*');
     var targetSelect = document.getElementById("taskTargetUser");
     var membersContainer = document.getElementById("adminMembers");
     
     var usersHtml = `<option value="all">All Members</option>`;
     var membersListHtml = "";
-    db.users.forEach(u => {
-        usersHtml += `<option value="${u.id}">${safe(u.username)}</option>`;
-        var planText = u.planActive ? `Active (${(u.planType || 'plan1').toUpperCase()})` : "Not Active";
-        membersListHtml += `<div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-            <div><strong>${safe(u.username)}</strong> (${safe(u.email)})<br>Balance: PKR ${u.balance} | Plan: <span class="status ${u.planActive ? 'active' : ''}">${planText}</span></div>
-            <button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="deleteUser('${u.id}')">Delete</button>
-        </div>`;
-    });
+    if(users){
+        users.forEach(u => {
+            usersHtml += `<option value="${u.id}">${safe(u.username)}</option>`;
+            var planText = u.plan_active ? `Active (${(u.plan_type || 'plan1').toUpperCase()})` : "Not Active";
+            membersListHtml += `<div class="glass request" style="padding:14px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>${safe(u.username)}</strong> (${safe(u.email)})<br>Balance: PKR ${u.balance} | Plan: <span class="status ${u.plan_active ? 'active' : ''}">${planText}</span></div>
+                <button class="btn red" style="padding:6px 10px; font-size:11px;" onclick="deleteUser('${u.id}')">Delete</button>
+            </div>`;
+        });
+    }
     targetSelect.innerHTML = usersHtml;
     membersContainer.innerHTML = membersListHtml || "<p class='small'>No registered members yet.</p>";
 }
 
-async function adminAction(endpoint, id){
-    await apiFetch("/admin/action", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ endpoint, id })
-    });
+// Admin Actions
+async function adminApproveDeposit(id){
+    let { data: dep } = await supabase.from('deposits').select('*').eq('id', id).single();
+    if(!dep) return;
+    let { data: user } = await supabase.from('users').select('*').eq('id', dep.user_id).single();
+    
+    let newBal = Number(user.balance) + Number(dep.amount);
+    await supabase.from('users').update({ balance: newBal }).eq('id', dep.user_id);
+    await supabase.from('deposits').update({ status: 'Approved' }).eq('id', id);
+    loadAdminData();
+}
+
+async function adminRejectDeposit(id){
+    await supabase.from('deposits').update({ status: 'Rejected' }).eq('id', id);
+    loadAdminData();
+}
+
+async function adminApproveWithdrawal(id){
+    let { data: wit } = await supabase.from('withdrawals').select('*').eq('id', id).single();
+    if(!wit) return;
+    let { data: user } = await supabase.from('users').select('*').eq('id', wit.user_id).single();
+
+    let newBal = Number(user.balance) - Number(wit.amount);
+    let newWith = Number(user.total_withdraw || 0) + Number(wit.amount);
+    await supabase.from('users').update({ balance: newBal, total_withdraw: newWith }).eq('id', wit.user_id);
+    await supabase.from('withdrawals').update({ status: 'Approved' }).eq('id', id);
+    loadAdminData();
+}
+
+async function adminRejectWithdrawal(id){
+    await supabase.from('withdrawals').update({ status: 'Rejected' }).eq('id', id);
+    loadAdminData();
+}
+
+async function adminApproveSubmission(id){
+    let { data: sub } = await supabase.from('submissions').select('*').eq('id', id).single();
+    if(!sub) return;
+    let { data: user } = await supabase.from('users').select('*').eq('id', sub.user_id).single();
+
+    let newBal = Number(user.balance) + Number(sub.reward);
+    let newEarn = Number(user.total_earning || 0) + Number(sub.reward);
+    await supabase.from('users').update({ balance: newBal, total_earning: newEarn }).eq('id', sub.user_id);
+    await supabase.from('submissions').update({ status: 'approved' }).eq('id', id);
+    loadAdminData();
+}
+
+async function adminRejectSubmission(id){
+    await supabase.from('submissions').update({ status: 'rejected' }).eq('id', id);
     loadAdminData();
 }
 
 async function deleteUser(id){
     if(confirm("Are you sure you want to delete this user?")) {
-        await apiFetch("/admin/action", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ endpoint: 'delete-user', id })
-        });
+        await supabase.from('users').delete().eq('id', id);
         loadAdminData();
     }
 }
@@ -994,12 +1049,10 @@ async function publishTask(){
     var targetUserId = document.getElementById("taskTargetUser").value;
 
     if(!title || !reward) return;
-    let res = await apiFetch("/admin/publish-task", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, reward, targetUserId })
-    });
-    alert(res.message);
+    let { error } = await supabase.from('tasks').insert([{ title, reward, targetUserId }]);
+    if(error){ alert(error.message); return; }
+    
+    alert("Assignment published successfully!");
     document.getElementById("taskTitle").value = "";
     document.getElementById("taskReward").value = "";
     loadAdminData();
@@ -1024,8 +1077,7 @@ window.onload = async function() {
 
     if(isAdmin) showAdmin();
     else if(currentUserId) {
-        let db = await getDB();
-        let user = db.users.find(u => u.id === currentUserId);
+        let { data: user } = await supabase.from('users').select('*').eq('id', currentUserId).single();
         if(user) { memberLoggedIn(); switchTab("dashboard"); }
         else { logout(); showPage("home"); }
     } else showPage("home");
