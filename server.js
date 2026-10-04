@@ -1,12 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 
-// MongoDB Connection (Vercel ke Environment Variable se link uthayega)
+// MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI)
@@ -239,7 +240,12 @@ app.post('/api/admin/publish-task', async (req, res) => {
     }
 });
 
-// Static files serve karne ke liye
+// Root URL par index.html serve karne ke liye
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Baaki static files ke liye
 app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 3000;
